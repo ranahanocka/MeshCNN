@@ -1,0 +1,189 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>MeshCNN</title>
+
+    <!-- CSS includes -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+    <link href="mainpage.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <h1><span style="font-size:22px">Siggraph 2019</span></h1>
+        <h1><span style="font-size:36px">MeshCNN: A Network with an Edge</span></h1>
+        <div class="authors">
+            <span style="font-size:18px"><a href="https://www.cs.tau.ac.il/~hanocka/" target="new">Rana Hanocka<sup>1</sup></a></span>
+            &nbsp;
+            <span style="font-size:18px"><a href="http://pxcm.org/" target="new">Amir Hertz<sup>1</sup></a></span>
+            &nbsp;
+            <span style="font-size:18px"><a href="https://www.cs.tau.ac.il/~noafish/" target="new">Noa Fish<sup>1</sup></a></span>
+            &nbsp;
+            <span style="font-size:18px"><a href="http://web.eng.tau.ac.il/~raja/" target="new">Raja Giryes<sup>1</sup></a></span>
+            &nbsp;
+            <span style="font-size:18px"><a href="https://scholar.google.co.il/citations?user=nEpKS-8AAAAJ&hl=en" target="new">Shachar Fleishman<sup>2</sup></a></span>
+            &nbsp;
+            <span style="font-size:18px"><a href="https://www.cs.tau.ac.il/~dcor/" target="new">Daniel Cohen-Or<sup>1</sup></a></span>
+            <br>
+            <span style="font-size:18px"><sup>1</sup>Tel Aviv University &nbsp;&nbsp;&nbsp; <sup>2</sup>Amazon<br><br></span>
+        </div>
+    </div>
+
+    <div class="row" style="text-align:center;padding:0;margin:0">
+        <div class="container">
+            <img src="imgs/T252.png" height="350px">
+        </div>
+    </div>
+
+<div class="container">
+
+        <div class="row">
+          <div class="col-lg-1 col-md-0 col-sm-0"></div>
+
+        <div class="col-lg-3 col-md-4 col-sm-6 text-center">
+            <div class="service-box mt-5 mx-auto">
+              <a href="https://bit.ly/meshcnn" target="_blank">
+                <i class="far fa-4x fa-file text-primary mb-3 "></i>
+              </a>
+              <h3 class="mb-3">Paper</h3>
+            </div>
+          </div>
+
+          <div class="col-lg-2 col-md-4 col-sm-6 text-center">
+            <div class="service-box mt-5 mx-auto">
+              <a href="https://github.com/ranahanocka/MeshCNN/" target="_blank">
+                <i class="fab fa-4x fa-github text-primary mb-3 "></i>
+              </a>
+              <h3 class="mb-3">Code</h3>
+            </div>
+          </div>
+
+          <div class="col-lg-2 col-md-6 col-sm-6 text-center">
+            <div class="service-box mt-5 mx-auto">
+              <a href="https://bit.ly/meshcnnslides" target="_blank">
+                <i class="fas fa-thumbtack fa-4x text-primary mb-3 "></i>
+              </a>
+              <h3 class="mb-3">Slides</h3>
+            </div>
+          </div>
+
+          <div class="col-lg-3 col-md-6 col-sm-6 text-center">
+            <div class="service-box mt-5 mx-auto">
+              <a href="http://cs.tau.ac.il/~hanocka/publications/meshcnn/meshcnn.bib" target="_blank"> <i class="fas fa-4x fa-quote-right text-primary mb-3 "></i> </a>
+              <h3 class="mb-3">Bibtex</h3>
+            </div>
+          </div>
+        </div>
+</div>
+
+</div>
+
+<div class="container">
+    <h2>Abstract</h2>
+Polygonal meshes provide an efficient representation for 3D shapes. They explicitly capture both shape surface and topology,
+    and leverage non-uniformity to represent large flat regions as well as sharp, intricate features. This non-uniformity
+    and irregularity, however, inhibits mesh analysis efforts using neural networks that combine convolution and pooling
+    operations. In this paper, we utilize the unique properties of the mesh for a direct analysis of 3D shapes using MeshCNN,
+    a convolutional neural network designed specifically for triangular meshes. Analogous to classic CNNs, MeshCNN combines
+    specialized convolution and pooling layers that operate on the mesh edges, by leveraging their intrinsic geodesic
+    connections. Convolutions are applied on edges and the four edges of their incident triangles, and pooling is applied
+    via an edge collapse operation that retains surface topology, thereby, generating new mesh connectivity for the
+    subsequent convolutions. MeshCNN learns which edges to collapse, thus forming a task-driven process where the network
+    exposes and expands the important features while discarding the redundant ones. We demonstrate the effectiveness
+    of our task-driven pooling on various learning tasks applied to 3D meshes.
+</div>
+
+<div class="container" >
+    <h2>Video</h2>
+    <div>
+        <div style="width: 75%;height: 0;padding-bottom: 42%;position: relative;margin-left: auto;margin-right: auto;">
+                <iframe src="https://www.youtube.com/embed/3cKGSV-VUVI" allowfullscreen style="position: absolute; width: 100%; height: 100%; left: 0; top: 0;"></iframe>
+        </div>
+    </div>
+</div>
+
+<div class="container" >
+    <h2>The Layers of MeshCNN</h2>
+    In MeshCNN the edges of a mesh are analogous to pixels in an image, since they are the basic building blocks
+    for all CNN operations. Just as images start with a basic input feature: an RGB value per pixel;
+    MeshCNN starts with a few basic geometric features per edge. The input edge feature is a 5-dimensional vector
+    every edge: the dihedral angle, two inner angles and two edge-length ratios for each face.
+    <div class="row" style="text-align:center;padding:0;margin:0">
+            <img src="imgs/input_edge_features.png" height="150px">
+            <h4>Input Edge Features</h4>
+    </div>
+
+    MeshCNN learns features on the edges of the mesh, since every edge is incident to exactly two faces (triangles),
+    which defines a natural fixed-sized convolutional neighborhood of four edges.
+    <div class="row" style="text-align:center;padding:0;margin:0">
+            <img src="imgs/mesh_conv.png" height="150px">
+            <h4>Mesh Convolution</h4>
+    </div>
+    Learned convolutional filters are applied on each edge feature vector and the 4 one-ring neighbors.
+    The consistent face normal order is used to apply a symmetric convolution operation, which learns edge
+    features that are invariant to rotations, translations and uniform scale.
+    Mesh pooling downsamples the number of features in the network, by performing a edge-collapse on the learned
+    edge features. The new edge neighbors are computed dynamically inside the network, and used in the next convolutions.
+    <div class="row" style="text-align:center;padding:0;margin:0">
+            <img src="imgs/mesh_pool_unpool.png" height="150px">
+            <h4>Mesh Pooling & Unpooling </h4>
+    </div>
+    For fully-convolutional tasks (such as segmentation), a mesh unpooling operation is used to restore the
+    original mesh resolution.
+</div>
+
+<div class="container" >
+    <h2>Results</h2>
+    <div class="row" style="text-align:center;padding:0;margin:0">
+            <img src="imgs/cubes.png" width="600px">
+            <img src="imgs/cubes2.png" width="600px">
+            <h4>Learned Simplifications on Cube Dataset </h4>
+    </div>
+
+    <div class="row" style="text-align:center;padding:0;margin:0">
+            <img src="imgs/T76.png" width="550px"> <br>
+            <img src="imgs/T18.png" width="550px">
+            <h4>Learned Simplifications on Shrec Dataset </h4>
+    </div>
+
+    <div class="row" style="text-align:center;padding:0;margin:0">
+            <img src="imgs/shrec__10_0.png" height="160px">
+            <img src="imgs/shrec__14_0.png" height="160px">
+            <img src="imgs/shrec__2_0.png" height="160px">
+            <h4>Human Segmentation Results </h4>
+    </div>
+
+    <div class="row" style="text-align:center;padding:0;margin:0">
+            <img src="imgs/coseg_alien.png" width="550px"> <br>
+            <img src="imgs/coseg_chair.png" width="550px"> <br>
+            <img src="imgs/coseg_vase.png" width="550px">
+            <h4>Coseg Segmentation Results </h4>
+    </div>
+
+</div>
+
+<div class="container" >
+    <h2>Download Datasets</h2>
+    <div>
+        <a href="https://www.dropbox.com/s/34vy4o5fthhz77d/coseg.tar.gz" target="new">COSEG segmentation dataset</a><br>
+        <a href="https://www.dropbox.com/s/s3n05sw0zg27fz3/human_seg.tar.gz" target="new">Human Segmentation dataset</a><br>
+        <a href="https://www.dropbox.com/s/2bxs5f9g60wa0wr/cubes.tar.gz" target="new">Cubes classification dataset</a><br>
+        <a href="https://www.dropbox.com/s/w16st84r6wc57u7/shrec_16.tar.gz" target="new">Shrec classification dataset</a><br>
+        See our github page for how to run our code on these datasets.
+    </div>
+</div>
+
+<div class="container" >
+    <h2>Contact</h2>
+    <div>
+        Rana at Hanocka dot com
+    </div>
+</div>
+
+<div id="footer">
+</div>
+
+
+</body></html>

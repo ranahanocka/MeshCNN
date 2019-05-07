@@ -1,0 +1,60 @@
+body {
+  font-family: 'Lato', sans-serif;
+  font-weight: 300;
+  color: #333;
+  font-size: 16px;
+}
+h1 {
+  font-size: 40px;
+  color: #555;
+  font-weight: 400;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  margin-top: 30px;
+  margin-bottom: 10px;
+}
+.authors {
+  color: #222;
+  font-size: 24px;
+  font-weight: 300;
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  margin-bottom: 0px;
+}
+.logoimg {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.container-fluid {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+.container {
+  margin-top: 10px;
+}
+#footer {
+  margin-bottom: 100px;
+}
+.thumbs {
+  -webkit-box-shadow: 1px 1px 3px #999;
+  -moz-box-shadow: 1px 1px 3px #999;
+  box-shadow: 1px 1px 3px #999;
+  margin-bottom: 20px;
+}
+h2 {
+  font-size: 24px;
+  font-weight: 900;
+  border-bottom: 1px solid #999;
+  margin-bottom: 20px;
+}
+
+
+.text-primary {
+  color: #5da2d5 !important;
+}
+.text-primary:hover {
+  color: #f3d250  !important;
+  opacity: 1.0;
+}
