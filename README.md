@@ -84,7 +84,7 @@ If you find this code useful, please consider citing our paper
   journal={ACM Transactions on Graphics (TOG)},
   volume={38},
   number={4},
-  pages={90},
+  pages = {90:1--90:12},
   year={2019},
   publisher={ACM}
 }
