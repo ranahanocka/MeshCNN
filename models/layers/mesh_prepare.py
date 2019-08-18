@@ -209,8 +209,8 @@ def scale_verts(mesh, mean=1, var=0.1):
 def angles_from_faces(mesh, edge_faces, faces):
     normals = [None, None]
     for i in range(2):
-        edge_a = mesh.vs[faces[edge_faces[:, 0], 2]] - mesh.vs[faces[edge_faces[:, 0], 1]]
-        edge_b = mesh.vs[faces[edge_faces[:, 1], 1]] - mesh.vs[faces[edge_faces[:, 1], 0]]
+        edge_a = mesh.vs[faces[edge_faces[:, i], 2]] - mesh.vs[faces[edge_faces[:, i], 1]]
+        edge_b = mesh.vs[faces[edge_faces[:, i], 1]] - mesh.vs[faces[edge_faces[:, i], 0]]
         normals[i] = np.cross(edge_a, edge_b)
         div = fixed_division(np.linalg.norm(normals[i], ord=2, axis=1), epsilon=0)
         normals[i] /= div[:, np.newaxis]
