@@ -44,7 +44,7 @@ class MeshPool(nn.Module):
         # recycle = []
         # last_queue_len = len(queue)
         last_count = mesh.edges_count + 1
-        mask = np.ones(mesh.edges_count, dtype=np.uint8)
+        mask = np.ones(mesh.edges_count, dtype=np.bool)
         edge_groups = MeshUnion(mesh.edges_count, self.__fe.device)
         while mesh.edges_count > self.__out_target:
             value, edge_id = heappop(queue)

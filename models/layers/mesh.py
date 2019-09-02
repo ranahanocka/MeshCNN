@@ -48,8 +48,8 @@ class Mesh:
             self.ve[v].remove(edge_id)
 
     def clean(self, edges_mask, groups):
-        torch_mask = torch.from_numpy(edges_mask.copy())
         edges_mask = edges_mask.astype(bool)
+        torch_mask = torch.from_numpy(edges_mask.copy())
         self.gemm_edges = self.gemm_edges[edges_mask]
         self.edges = self.edges[edges_mask]
         self.sides = self.sides[edges_mask]
@@ -155,7 +155,7 @@ class Mesh:
                                'occurrences': [],
                                'old2current': np.arange(self.edges_count, dtype=np.int32),
                                'current2old': np.arange(self.edges_count, dtype=np.int32),
-                               'edges_mask': [torch.ones(self.edges_count,dtype=torch.uint8)],
+                               'edges_mask': [torch.ones(self.edges_count,dtype=torch.bool)],
                                'edges_count': [self.edges_count],
                               }
         if self.export_folder:
