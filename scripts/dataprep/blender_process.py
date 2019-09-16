@@ -16,7 +16,7 @@ Author: Rana Hanocka
 @output:
     renders the mesh to an image
     to run it from cmd line:
-    /opt/blender/blender --background --python blender_process.py /home/rana/code/pc2mesh/data/koala.obj 1000 /home/rana/temp2.obj
+    /opt/blender/blender --background --python blender_process.py /home/rana/koala.obj 1000 /home/rana/koala_1000.obj
 '''
 
 class Process:
