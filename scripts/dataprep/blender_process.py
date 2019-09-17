@@ -14,7 +14,7 @@ Author: Rana Hanocka
     <outfile> name of simplified .obj file
 
 @output:
-    renders the mesh to an image
+    simplified mesh .obj
     to run it from cmd line:
     /opt/blender/blender --background --python blender_process.py /home/rana/koala.obj 1000 /home/rana/koala_1000.obj
 '''
