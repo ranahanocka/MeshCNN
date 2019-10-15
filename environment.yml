@@ -5,7 +5,7 @@ channels:
 dependencies:
   - python=3.6.8
   - cython=0.27.3
-  - pytorch=1.0.1
+  - pytorch=1.2.0
   - numpy=1.15.0
   - matplotlib=3.0.3
   - pip 
