@@ -114,6 +114,11 @@ def remove_non_manifolds(mesh, faces):
 
 
 def build_gemm(mesh, faces, face_areas):
+    """
+    gemm_edges: array (#E x 4) of the 4 one-ring neighbors for each edge
+    sides: array (#E x 4) indices (values of: 0,1,2,3) indicating where an edge is in the gemm_edge entry of the 4 neighboring edges
+    for example edge i -> gemm_edges[gemm_edges[i], sides[i]] == [i, i, i, i]
+    """
     mesh.ve = [[] for _ in mesh.vs]
     edge_nb = []
     sides = []
