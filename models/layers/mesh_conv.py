@@ -4,9 +4,9 @@ import torch.nn.functional as F
 
 class MeshConv(nn.Module):
     """ Computes convolution between edges and 4 incident (1-ring) edge neighbors
-    in the forward pass:
-    takes edge features (x)
-    and a mesh data-structure (mesh)
+    in the forward pass takes:
+    x: edge features (Batch x Features x Edges)
+    mesh: list of mesh data-structure (len(mesh) == Batch)
     and applies convolution
     """
     def __init__(self, in_channels, out_channels, k=5, bias=True):
