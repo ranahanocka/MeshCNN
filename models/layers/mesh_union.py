@@ -6,7 +6,7 @@ class MeshUnion:
     def __init__(self, n, device=torch.device('cpu')):
         self.__size = n
         self.rebuild_features = self.rebuild_features_average
-        self.groups = torch.eye(n).to(device)
+        self.groups = torch.eye(n, device=device)
 
     def union(self, source, target):
         self.groups[target, :] += self.groups[source, :]
