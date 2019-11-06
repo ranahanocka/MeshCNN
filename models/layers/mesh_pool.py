@@ -46,11 +46,19 @@ class MeshPool(nn.Module):
         last_count = mesh.edges_count + 1
         mask = np.ones(mesh.edges_count, dtype=np.bool)
         edge_groups = MeshUnion(mesh.edges_count, self.__fe.device)
+
+        self.to_merge_edges = []
+        #self.to_remove_edges = []
         while mesh.edges_count > self.__out_target:
             value, edge_id = heappop(queue)
             edge_id = int(edge_id)
             if mask[edge_id]:
                 self.__pool_edge(mesh, edge_id, mask, edge_groups)
+
+        MeshPool.__union_multiple_groups(mesh, edge_groups, self.to_merge_edges)
+        #for k in self.to_remove_edges:
+            #MeshPool.__remove_group(mesh, edge_groups, k)
+            #mesh.remove_edge(k)
         mesh.clean(mask, edge_groups)
         fe = edge_groups.rebuild_features(self.__fe[mesh_index], mask, self.__out_target)
         self.__updated_fe[mesh_index] = fe
@@ -104,8 +112,12 @@ class MeshPool(nn.Module):
         key_a, key_b, side_a, side_b, _, other_side_b, _, other_keys_b = info
         self.__redirect_edges(mesh, key_a, side_a - side_a % 2, other_keys_b[0], mesh.sides[key_b, other_side_b])
         self.__redirect_edges(mesh, key_a, side_a - side_a % 2 + 1, other_keys_b[1], mesh.sides[key_b, other_side_b + 1])
-        MeshPool.__union_groups(mesh, edge_groups, key_b, key_a)
-        MeshPool.__union_groups(mesh, edge_groups, edge_id, key_a)
+
+        self.to_merge_edges.append((key_b, key_a))
+        self.to_merge_edges.append((edge_id, key_a))
+        #self.to_remove_edges.append(key_b)
+        #MeshPool.__union_groups(mesh, edge_groups, key_b, key_a)
+        #MeshPool.__union_groups(mesh, edge_groups, edge_id, key_a)
         mask[key_b] = False
         MeshPool.__remove_group(mesh, edge_groups, key_b)
         mesh.remove_edge(key_b)
@@ -195,6 +207,13 @@ class MeshPool(nn.Module):
     def __union_groups(mesh, edge_groups, source, target):
         edge_groups.union(source, target)
         mesh.union_groups(source, target)
+
+    @staticmethod
+    def __union_multiple_groups(mesh, edge_groups, source_target):
+        combined = [list(t) for t in zip(*source_target)]
+        edge_groups.union(combined[0], combined[1])
+        for s, t in source_target:
+            mesh.union_groups(s, t)
 
     @staticmethod
     def __remove_group(mesh, edge_groups, index):
