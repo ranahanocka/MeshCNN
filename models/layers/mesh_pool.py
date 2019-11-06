@@ -82,7 +82,7 @@ class MeshPool(nn.Module):
     def __clean_side(self, mesh, edge_id, mask, edge_groups, side):
         if mesh.edges_count <= self.__out_target:
             return False
-        invalid_edges = MeshPool.__get_invalids(mesh, edge_id, edge_groups, side)
+        invalid_edges = self.__get_invalids(mesh, edge_id, edge_groups, side)
         while len(invalid_edges) != 0 and mesh.edges_count > self.__out_target:
             self.__remove_triplete(mesh, mask, edge_groups, invalid_edges)
             if mesh.edges_count <= self.__out_target:
@@ -124,8 +124,7 @@ class MeshPool(nn.Module):
         mesh.edges_count -= 1
         return key_a
 
-    @staticmethod
-    def __get_invalids(mesh, edge_id, edge_groups, side):
+    def __get_invalids(self, mesh, edge_id, edge_groups, side):
         info = MeshPool.__get_face_info(mesh, edge_id, side)
         key_a, key_b, side_a, side_b, other_side_a, other_side_b, other_keys_a, other_keys_b = info
         shared_items = MeshPool.__get_shared_items(other_keys_a, other_keys_b)
@@ -141,12 +140,11 @@ class MeshPool(nn.Module):
             MeshPool.__redirect_edges(mesh, edge_id, side, update_key_a, update_side_a)
             MeshPool.__redirect_edges(mesh, edge_id, side + 1, update_key_b, update_side_b)
             MeshPool.__redirect_edges(mesh, update_key_a, MeshPool.__get_other_side(update_side_a), update_key_b, MeshPool.__get_other_side(update_side_b))
-            MeshPool.__union_groups(mesh, edge_groups, key_a, edge_id)
-            MeshPool.__union_groups(mesh, edge_groups, key_b, edge_id)
-            MeshPool.__union_groups(mesh, edge_groups, key_a, update_key_a)
-            MeshPool.__union_groups(mesh, edge_groups, middle_edge, update_key_a)
-            MeshPool.__union_groups(mesh, edge_groups, key_b, update_key_b)
-            MeshPool.__union_groups(mesh, edge_groups, middle_edge, update_key_b)
+            self.to_merge_edges.append((key_a, edge_id))
+            self.to_merge_edges.append((key_b, edge_id))
+            self.to_merge_edges.append((key_a, update_key_a))
+            self.to_merge_edges.append((middle_edge, update_key_a))
+            self.to_merge_edges.append((middle_edge, update_key_b))
             return [key_a, key_b, middle_edge]
 
     @staticmethod
