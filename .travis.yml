@@ -1,0 +1,24 @@
+notifications:
+  email:
+    on_success: never
+    on_failure: always
+language: python
+python:
+  - "3.6"
+cache: pip
+install:
+  - sudo apt-get update
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+  - bash miniconda.sh -b -p $HOME/anaconda3
+  - source "$HOME/anaconda3/etc/profile.d/conda.sh"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+
+  # create meshcnn env
+  - conda env create -f environment.yml
+  - conda activate meshcnn
+script:
+  - python -m pytest scripts/test_general.py
