@@ -14,21 +14,22 @@ def get_data(dset):
     cmd = './scripts/{}/get_data.sh > /dev/null 2>&1'.format(dset)
     os.system(cmd)
 
-def temp_file_name(dset):
-    return './scripts/{}/train_temp.sh'.format(dset)
-
-def run_train(dset):
-    train_file = './scripts/{}/train.sh'.format(dset)
-    temp_train_file = temp_file_name(dset)
-    p = subprocess.run(['cp', '-p', '--preserve', train_file, temp_train_file])
-    with open(train_file) as f:
+def add_args(file, temp_file, new_args):
+    with open(file) as f:
         tokens = f.readlines()
     # now make the config so it only trains for one iteration
     tokens[-1] = tokens[-1] + '\n'
-    tokens.append('--niter_decay 0 \\\n')
-    tokens.append('--niter 1 \\')
-    with open(temp_train_file, 'w') as f:
+    for arg in new_args:
+        tokens.append(arg)
+    with open(temp_file, 'w') as f:
         f.writelines(tokens)
+
+def run_train(dset):
+    train_file = './scripts/{}/train.sh'.format(dset)
+    temp_train_file = './scripts/{}/train_temp.sh'.format(dset)
+    p = subprocess.run(['cp', '-p', '--preserve', train_file, temp_train_file])
+    add_args(train_file, temp_train_file, ['--niter_decay 0 \\\n', '--niter 1 \\\n', '--gpu_ids -1 \\'])
+    # add_args(train_file, temp_train_file, ['--niter_decay 0 \\\n', '--niter 1 \\\n'])
     cmd = "bash -c 'source ~/anaconda3/bin/activate ~/anaconda3/envs/meshcnn && {}'".format(temp_train_file)
     os.system(cmd)
     os.remove(temp_train_file)
@@ -38,8 +39,14 @@ def get_pretrained(dset):
     os.system(cmd)
 
 def run_test(dset):
-    cmd = "bash -c 'source ~/anaconda3/bin/activate ~/anaconda3/envs/meshcnn && ./scripts/{}/test.sh'".format(dset)
+    test_file = './scripts/{}/test.sh'.format(dset)
+    temp_test_file = './scripts/{}/test_temp.sh'.format(dset)
+    p = subprocess.run(['cp', '-p', '--preserve', test_file, temp_test_file])
+    add_args(test_file, temp_test_file, ['--gpu_ids -1 \\'])
+    # now run inference
+    cmd = "bash -c 'source ~/anaconda3/bin/activate ~/anaconda3/envs/meshcnn && {}'".format(temp_test_file)
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    os.remove(temp_test_file)
     (_out, err) = proc.communicate()
     out = str(_out)
     idf0 = 'TEST ACC: ['
