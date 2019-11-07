@@ -46,7 +46,6 @@ def run_test(dset):
     # now run inference
     cmd = "bash -c 'source ~/anaconda3/bin/activate ~/anaconda3/envs/meshcnn && {}'".format(temp_test_file)
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-    os.remove(temp_test_file)
     (_out, err) = proc.communicate()
     out = str(_out)
     idf0 = 'TEST ACC: ['
@@ -56,6 +55,7 @@ def run_test(dset):
     acc = float(accs)
     if dset == 'shrec':
         assert acc == 99.167, "shrec accuracy was {} and not 99.167".format(acc)
+    os.remove(temp_test_file)
 
 def test_one():
     dsets = ['shrec']
