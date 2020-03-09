@@ -354,6 +354,10 @@ def symmetric_ratios(mesh, edge_points):
 
 
 def get_edge_points(mesh):
+    """ returns: edge_points (#E x 4) tensor, with four vertex ids per edge
+        for example: edge_points[edge_id, 0] and edge_points[edge_id, 1] are the two vertices which define edge_id 
+        each adjacent face to edge_id has another vertex, which is edge_points[edge_id, 2] or edge_points[edge_id, 3]
+    """
     edge_points = np.zeros([mesh.edges_count, 4], dtype=np.int32)
     for edge_id, edge in enumerate(mesh.edges):
         edge_points[edge_id] = get_side_points(mesh, edge_id)
