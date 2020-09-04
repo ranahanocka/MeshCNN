@@ -1,7 +1,7 @@
 import torch
 from . import networks
 from os.path import join
-from util.util import seg_accuracy, print_network
+from util.util import seg_accuracy, print_network, intersection_over_union, mean_iou_calc
 
 
 class ClassifierModel:
@@ -32,7 +32,7 @@ class ClassifierModel:
         self.net = networks.define_classifier(opt.input_nc, opt.ncf, opt.ninput_edges, opt.nclasses, opt,
                                               self.gpu_ids, opt.arch, opt.init_type, opt.init_gain)
         self.net.train(self.is_train)
-        self.criterion = networks.define_loss(opt).to(self.device)
+        self.criterion = networks.define_loss(opt, self.labels ).to(self.device)
 
         if self.is_train:
             self.optimizer = torch.optim.Adam(self.net.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
@@ -113,7 +113,10 @@ class ClassifierModel:
             label_class = self.labels
             self.export_segmentation(pred_class.cpu())
             correct = self.get_accuracy(pred_class, label_class)
-        return correct, len(label_class)
+            print("COOR", correct.shape)
+            print(correct)
+            mean_iou, iou = self.get_iou(pred_class, label_class)
+        return correct, len(label_class), mean_iou, iou
 
     def get_accuracy(self, pred, labels):
         """computes accuracy for classification / segmentation """
@@ -122,6 +125,12 @@ class ClassifierModel:
         elif self.opt.dataset_mode == 'segmentation':
             correct = seg_accuracy(pred, self.soft_label, self.mesh)
         return correct
+
+
+    def get_iou(self, pred):
+        if self.opt.dataset_mode == 'segmentation':
+            mean_iou, iou = mean_iou_calc(pred, self.labels, self.nclasses, self.opt.batch_size)
+        return mean_iou, iou
 
     def export_segmentation(self, pred_seg):
         if self.opt.dataset_mode == 'segmentation':
