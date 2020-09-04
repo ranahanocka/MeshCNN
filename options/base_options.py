@@ -2,7 +2,7 @@ import argparse
 import os
 from util import util
 import torch
-
+import sys
 
 class BaseOptions:
     def __init__(self):
@@ -35,8 +35,25 @@ class BaseOptions:
         self.parser.add_argument('--seed', type=int, help='if specified, uses seed')
         # visualization params
         self.parser.add_argument('--export_folder', type=str, default='', help='exports intermediate collapses to this folder')
+        # loss
+        self.parser.add_argument('--weighted_loss',  nargs='+', default=[0.25, 0.25, 0.25, 0.25], type=float, help='Weights for loss')
         #
         self.initialized = True
+
+    def get_device(self):
+        if not self.initialized:
+            self.initialize()
+        self.opt, unknown = self.parser.parse_known_args()
+
+        str_ids = self.opt.gpu_ids.split(',')
+        self.opt.gpu_ids = []
+        for str_id in str_ids:
+            id = int(str_id)
+            if id >= 0:
+                self.opt.gpu_ids.append(id)
+        return self.opt.gpu_ids
+
+
 
     def parse(self):
         if not self.initialized:
@@ -45,6 +62,7 @@ class BaseOptions:
         self.opt.is_train = self.is_train   # train or test
 
         str_ids = self.opt.gpu_ids.split(',')
+        print("strid", str_ids)
         self.opt.gpu_ids = []
         for str_id in str_ids:
             id = int(str_id)
@@ -84,3 +102,4 @@ class BaseOptions:
                     opt_file.write('%s: %s\n' % (str(k), str(v)))
                 opt_file.write('-------------- End ----------------\n')
         return self.opt
+

@@ -1,32 +1,33 @@
 import torch
 from torch.nn import ConstantPad2d
-from util.util import myindexrowselect
+import time
+from util.util import  myindexrowselect
 
-
+from options.base_options import BaseOptions
 
 class MeshUnion:
-    def __init__(self, n, device=torch.device('cpu')):
+    def __init__(self, n,  device=torch.device('cpu')):
+        gpu_ids = BaseOptions().get_device()
+        self.device = torch.device('cuda:{}'.format(gpu_ids[0])) if len(gpu_ids)>0 else torch.device('cpu')
+
         self.__size = n
         self.rebuild_features = self.rebuild_features_average
         self.values = torch.ones(n, dtype= torch.float)
         self.groups = torch.sparse_coo_tensor(indices= torch.stack((torch.arange(n), torch.arange(n)),dim=0), values= self.values,
-                              size=(self.__size, self.__size), device=device)
 
+                              size=(self.__size, self.__size), device=device).to(self.device)
 
 
     def union(self, source, target):
-        #Get source row
         index = torch.tensor([source], dtype=torch.long)
-        row = myindexrowselect(self.groups, index)
-
-        #Change to target row
+        row = myindexrowselect(self.groups, index).to(self.device)
         row._indices()[0] = torch.tensor(target)
         row = torch.sparse_coo_tensor(indices=row._indices(), values= row._values(),
                              size=(self.__size, self.__size))
-
-        #Add to target row
         self.groups = self.groups.add(row)
         self.groups = self.groups.coalesce()
+        del index, row
+
 
     def remove_group(self, index):
         return
@@ -40,15 +41,16 @@ class MeshUnion:
 
     def get_groups(self, tensor_mask):
         ## Max comp
-        mask_index = torch.squeeze((tensor_mask == True).nonzero())
-        groups = myindexrowselect(self.groups,mask_index)
-        return groups
+        mask_index = torch.squeeze((tensor_mask == True).nonzero()).to(self.device)
+
+        start_time = time.time()
+        return myindexrowselect(self.groups, mask_index)#.cuda()
 
 
     def rebuild_features_average(self, features, mask, target_edges):
         self.prepare_groups(features, mask)
 
-        features = features.type(torch.FloatTensor)
+        self.groups = self.groups.to(self.device)
         fe = torch.matmul(self.groups.transpose(0,1),features.squeeze(-1).transpose(1,0)).transpose(0,1)
         occurrences = torch.sparse.sum(self.groups, 0).to_dense()
         fe = fe / occurrences
@@ -60,12 +62,9 @@ class MeshUnion:
 
 
     def prepare_groups(self, features, mask):
-        tensor_mask = torch.from_numpy(mask)
-        mask_index = torch.squeeze((tensor_mask == True).nonzero())
+        mask_index = torch.squeeze((torch.from_numpy(mask) == True).nonzero())
 
-        self.groups = myindexrowselect(self.groups, mask_index)
-        self.groups = self.groups.transpose(1,0)
-
+        self.groups = myindexrowselect(self.groups, mask_index).transpose(1,0)
         padding_a = features.shape[1] - self.groups.shape[0]
 
         if padding_a > 0:
