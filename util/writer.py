@@ -1,11 +1,14 @@
 import os
 import time
+import torch
+import numpy as np
 
 try:
     from tensorboardX import SummaryWriter
 except ImportError as error:
     print('tensorboard X not installed, visualizing wont be available')
     SummaryWriter = None
+
 
 class Writer:
     def __init__(self, opt):
@@ -17,7 +20,10 @@ class Writer:
         self.start_logs()
         self.nexamples = 0
         self.ncorrect = 0
-        #
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.iou = torch.zeros([opt.nclasses]).to(self.device)
+        self.avg_iou = 0
+
         if opt.is_train and not opt.no_vis and SummaryWriter is not None:
             self.display = SummaryWriter(comment=opt.name)
         else:
@@ -47,6 +53,10 @@ class Writer:
         if self.display:
             self.display.add_scalar('data/train_loss', loss, iters)
 
+    def plot_lr(self, lr, epoch):
+        if self.display:
+            self.display.add_scalar('data/lr', lr, epoch)
+
     def plot_model_wts(self, model, epoch):
         if self.opt.is_train and self.display:
             for name, param in model.net.named_parameters():
@@ -54,30 +64,50 @@ class Writer:
 
     def print_acc(self, epoch, acc):
         """ prints test accuracy to terminal / file """
-        message = 'epoch: {}, TEST ACC: [{:.5} %]\n' \
+        message = 'epoch: {}, TEST ACC: [{:.5} %]' \
             .format(epoch, acc * 100)
         print(message)
         with open(self.testacc_log, "a") as log_file:
             log_file.write('%s\n' % message)
 
+    def print_iou(self, epoch, avg_iou, iou):
+        """ prints test accuracy to terminal / file """
+        message = 'epoch: {}, TEST MEAN_IOU:  [{:.5} %] \nepoch: {}, IOU: {}\n' \
+            .format(epoch, avg_iou * 100, epoch, iou.cpu().numpy() * 100)
+        print(message)
+        with open(self.testacc_log, "a") as log_file:
+            log_file.write('%s' % message)
+
     def plot_acc(self, acc, epoch):
         if self.display:
             self.display.add_scalar('data/test_acc', acc, epoch)
 
-    def reset_counter(self):
+    def reset_counter(self, opt):
         """
         counts # of correct examples
         """
         self.ncorrect = 0
         self.nexamples = 0
+        self.iou = torch.zeros([opt.nclasses])
+        self.avg_iou = 0
 
-    def update_counter(self, ncorrect, nexamples):
+    def update_counter(self, ncorrect, nexamples, avg_iou, iou):
         self.ncorrect += ncorrect
         self.nexamples += nexamples
+        self.iou = torch.stack([self.iou.to(self.device), iou.to(self.device)]).sum(dim=0)
+        self.avg_iou += avg_iou
 
     @property
     def acc(self):
         return float(self.ncorrect) / self.nexamples
+
+    @property
+    def mean_iou(self):
+        return (self.avg_iou / self.nexamples)
+
+    @property
+    def seg_iou(self):
+        return (self.iou / self.nexamples)
 
     def close(self):
         if self.display is not None:
