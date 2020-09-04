@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
-
+import sys
+import time
 
 
 class MeshUnpool(nn.Module):
@@ -16,8 +17,11 @@ class MeshUnpool(nn.Module):
         padding_rows =  unroll_start - start
         padding_cols = self.unroll_target - end
         if padding_rows != 0 or padding_cols !=0:
-            padding = nn.ConstantPad2d((0, padding_cols, 0, padding_rows), 0)
-            group = padding(group)
+            size1 = group.shape[0] + padding_rows
+            size2 = group.shape[1] + padding_cols
+            group = torch.sparse_coo_tensor(
+                indices=group._indices(), values=group._values(), dtype=torch.float32,
+                size=(size1, size2))
         return group
 
     def pad_occurrences(self, occurrences):
@@ -30,12 +34,40 @@ class MeshUnpool(nn.Module):
     def forward(self, features, meshes):
         batch_size, nf, edges = features.shape
         groups = [self.pad_groups(mesh.get_groups(), edges) for mesh in meshes]
-        unroll_mat = torch.cat(groups, dim=0).view(batch_size, edges, -1)
+        unroll_mat = torch.stack(groups)
         occurrences = [self.pad_occurrences(mesh.get_occurrences()) for mesh in meshes]
-        occurrences = torch.cat(occurrences, dim=0).view(batch_size, 1, -1)
-        occurrences = occurrences.expand(unroll_mat.shape)
-        unroll_mat = unroll_mat / occurrences
-        unroll_mat = unroll_mat.to(features.device)
+        occurrences = torch.unsqueeze(torch.stack(occurrences, dim=0), dim=1)
+
+        imin = 0
+        length = 500
+
+        while imin <= unroll_mat.size()[2]:
+            try:
+                slicesgroup = unroll_mat.narrow_copy(2, imin, length).to_dense()
+                occ = occurrences.narrow_copy(2, imin, length)
+                res = (slicesgroup / occ).to_sparse()
+                imin = imin + 500
+                try:
+                    allgroups = torch.cat((allgroups, res), -1)
+                except NameError:
+                    allgroups = res
+            except Exception as e:
+                length = unroll_mat.size()[2] - imin
+        unroll_mat = allgroups.to(features.device)
         for mesh in meshes:
             mesh.unroll_gemm()
-        return torch.matmul(features, unroll_mat)
+
+        one = unroll_mat.transpose(1,2)
+        two = features.transpose(1,2)
+
+        mauz = torch.empty(size=(batch_size, features.shape[1], unroll_mat.shape[2]))
+
+        for m in range(batch_size):
+            ml = torch.matmul(one[m], two[m])
+            if m == 0:
+                mauz  = torch.unsqueeze(ml, dim=0)
+            else:
+                mauz = torch.cat((mauz, torch.unsqueeze(ml, dim=0)), dim=0)
+
+        mauz = mauz.transpose(1,2)
+        return mauz
