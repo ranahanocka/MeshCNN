@@ -52,8 +52,7 @@ class MeshUnpool(nn.Module):
                 except NameError:
                     allgroups = res
 
-            except Exception as e:
-                print(e)
+            except Exception:
                 length = unroll_mat.size()[2] - imin
 
         unroll_mat = allgroups.to(features.device)

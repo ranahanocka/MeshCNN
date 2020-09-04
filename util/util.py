@@ -54,7 +54,6 @@ def mean_iou_calc(pred, target, num_classes, batch=None):
         pred = pred[:len[0]]
 
     iou = intersection_over_union(pred, target, num_classes, batch)
-    print(iou)
     mean_iou = iou.mean(dim=-1)
     return mean_iou, iou
 
@@ -105,7 +104,6 @@ def myindexrowselect(groups, mask_index):
     index = groups._indices()
     newrowindex = -1
 
-    print(groups, mask_index)
 
     for ind in mask_index:
         try:

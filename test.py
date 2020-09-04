@@ -1,8 +1,9 @@
+
 from options.test_options import TestOptions
 from data import DataLoader
 from models import create_model
 from util.writer import Writer
-
+import os
 
 def run_test(epoch=-1):
     print('Running Test')
@@ -12,14 +13,20 @@ def run_test(epoch=-1):
     model = create_model(opt)
     writer = Writer(opt)
     # test
-    writer.reset_counter()
+    writer.reset_counter(opt)
     for i, data in enumerate(dataset):
         model.set_input(data)
-        ncorrect, nexamples = model.test()
-        writer.update_counter(ncorrect, nexamples)
+        ncorrect, nexamples, mean_iou, iou = model.test()
+        writer.update_counter(ncorrect, nexamples, mean_iou, iou)
     writer.print_acc(epoch, writer.acc)
-    return writer.acc
+    writer.print_iou(epoch, writer.mean_iou, writer.seg_iou)
+    return writer.acc, writer.mean_iou, writer.iou
 
 
 if __name__ == '__main__':
-    run_test()
+   run_test()
+
+
+
+
+

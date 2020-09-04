@@ -62,7 +62,6 @@ class BaseOptions:
         self.opt.is_train = self.is_train   # train or test
 
         str_ids = self.opt.gpu_ids.split(',')
-        print("strid", str_ids)
         self.opt.gpu_ids = []
         for str_id in str_ids:
             id = int(str_id)
