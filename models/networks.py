@@ -7,6 +7,7 @@ from models.layers.mesh_conv import MeshConv
 import torch.nn.functional as F
 from models.layers.mesh_pool import MeshPool
 from models.layers.mesh_unpool import MeshUnpool
+import numpy as np
 
 
 ###############################################################################
@@ -110,12 +111,15 @@ def define_classifier(input_nc, ncf, ninput_edges, nclasses, opt, gpu_ids, arch,
         raise NotImplementedError('Encoder model name [%s] is not recognized' % arch)
     return init_net(net, init_type, init_gain, gpu_ids)
 
+
 def define_loss(opt):
     if opt.dataset_mode == 'classification':
         loss = torch.nn.CrossEntropyLoss()
     elif opt.dataset_mode == 'segmentation':
-        loss = torch.nn.CrossEntropyLoss(ignore_index=-1)
+        weights = torch.FloatTensor(opt.weighted_loss)
+        loss = torch.nn.CrossEntropyLoss(weights, ignore_index=-1)
     return loss
+
 
 ##############################################################################
 # Classes For Classification / Segmentation Networks
@@ -183,6 +187,7 @@ class MeshEncoderDecoder(nn.Module):
     """Network for fully-convolutional tasks (segmentation)
     """
     def __init__(self, pools, down_convs, up_convs, blocks=0, transfer_data=True):
+        print("pool",pools, "down_convs", down_convs, "upconvs", up_convs, "blocks", blocks)
         super(MeshEncoderDecoder, self).__init__()
         self.transfer_data = transfer_data
         self.encoder = MeshEncoder(pools, down_convs, blocks=blocks)
