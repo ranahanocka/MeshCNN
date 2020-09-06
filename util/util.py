@@ -111,41 +111,30 @@ def pad_with(vector, pad_width, iaxis, kwargs):
     vector[-pad_width[1]:] = pad_value
 
 
+
+
+
 def myindexrowselect(groups, mask_index):
-    index = groups._indices()
-    newrowindex = -1
 
-    for ind in mask_index:
-        try:
-            newrowindex = newrowindex + 1
-        except NameError:
-            newrowindex = 0
+    sparseIndices = groups._indices()
+    newIndices = []
 
-        keptindex = torch.squeeze((index[0] == ind).nonzero())
+    for i, value in enumerate(mask_index):
+        #Get index from relevant indices
+        index = (sparseIndices[0] == value).nonzero()
 
-        if len(keptindex.size()) == 0:
-            # Get column values from mask, create new row idx
-            try:
-                newidx = torch.cat((newidx, torch.tensor([newrowindex])), 0)
-                newcolval = torch.cat((newcolval, torch.tensor([index[1][keptindex.item()]])), 0)
-            except NameError:
-                newidx = torch.tensor([newrowindex])
-                newcolval = torch.tensor([index[1][keptindex.item()]])
+        #Get rows by index
+        sparseRow = [sparseIndices[:, value] for value in index]
+        sparseRow = torch.cat(sparseRow,1)[1]
+        singleRowIndices = torch.squeeze(torch.full((1,len(sparseRow)),i, dtype=torch.long),0)
+        indices = torch.stack((singleRowIndices,sparseRow))
+        newIndices.append(indices)
 
-        else:
-            # Get column values from mask, create new row idx
-            # Add newrowindex eee.size() time to list
-            for i in range(list(keptindex.size())[0]):
-                try:
-                    newidx = torch.cat((newidx, torch.tensor([newrowindex])), 0)
-                    newcolval = torch.cat((newcolval, torch.tensor([index[1][keptindex.tolist()[i]]])), 0)
-                except NameError:
-                    newidx = torch.tensor([newrowindex])
-                    newcolval = torch.tensor([index[1][keptindex.tolist()[i]]])
+        allNewIndices = torch.cat(newIndices,1)
 
-    groups = torch.sparse_coo_tensor(indices=torch.stack((newidx, newcolval), dim=0),
-                                     values=torch.ones(newidx.shape[0], dtype=torch.float),
+    #Create new tensor
+    groups = torch.sparse_coo_tensor(indices=allNewIndices,
+                                     values=torch.ones(allNewIndices.shape[1], dtype=torch.float),
                                      size=(len(mask_index), groups.shape[1]))
+
     return groups
-
-
