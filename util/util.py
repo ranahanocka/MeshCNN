@@ -38,31 +38,31 @@ def seg_accuracy(predicted, ssegs, meshes):
     return correct
 
 
-def intersection_over_union(preds, target, num_classes, batch=None):
+def intersection_over_union(preds, target, num_classes):
     preds, target = torch.nn.functional.one_hot(preds, num_classes), torch.nn.functional.one_hot(target, num_classes)
-    preds.cpu()
-    target.cpu()
-    if batch == None:
-        i = (preds & target).sum(dim=0)
-        u = (preds | target).sum(dim=0)
-        iou = i.to(torch.float) / u.to(torch.float)
-    else:
-        iou = torch.zeros(num_classes, dtype=torch.float32)
-        for idx, pred in enumerate(preds):
+    iou = torch.zeros(num_classes, dtype=torch.float32)
+    for idx, pred in enumerate(preds):
             i = (pred & target[idx]).sum(dim=0)
             u = (pred | target[idx]).sum(dim=0)
             iou = iou.add(i.cpu().to(torch.float) / u.cpu().to(torch.float))
     return iou
 
 
-def mean_iou_calc(pred, target, num_classes, batch=None):
-    pred = torch.squeeze(pred)
-    target = torch.squeeze(target)
-    if (target == -1).any():
-        target = target[target != -1]
-        len = target.size()
-        pred = pred[:len[0]]
-    iou = intersection_over_union(pred, target, num_classes, batch)
+def mean_iou_calc(pred, target, num_classes):
+    #Removal of padded labels marked with -1
+    slimpred = []
+    slimtarget = []
+
+    for batch in range(pred.shape[0]):
+        if (target[batch] == -1).any():
+            slimLabels = target[batch][target[batch]!=-1]
+            slimtarget.append(slimLabels)
+            slimpred.append(pred[batch][:slimLabels.size()[0]])
+
+    pred = torch.stack(slimpred,0)
+    target = torch.stack(slimtarget, 0)
+
+    iou = intersection_over_union(pred, target, num_classes)
     mean_iou = iou.mean(dim=-1)
     return mean_iou, iou
 
@@ -126,7 +126,7 @@ def myindexrowselect(groups, mask_index, device):
         #Get rows by index
         sparseRow = [sparseIndices[:, value] for value in index]
         sparseRow = torch.cat(sparseRow,1)[1]
-        singleRowIndices = torch.squeeze(torch.full((1,len(sparseRow)),i, dtype=torch.long),0).to(device)
+        singleRowIndices = torch.squeeze(torch.full((1,len(sparseRow)),i, dtype=torch.long),0).to(sparseRow.device)
         indices = torch.stack((singleRowIndices,sparseRow))
         newIndices.append(indices)
 
