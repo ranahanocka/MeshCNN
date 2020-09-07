@@ -20,7 +20,7 @@ class MeshUnion:
 
     def union(self, source, target):
         index = torch.tensor([source], dtype=torch.long)
-        row = myindexrowselect(self.groups, index).to(self.device)
+        row = myindexrowselect(self.groups, index, self.device).to(self.device)
         row._indices()[0] = torch.tensor(target)
         row = torch.sparse_coo_tensor(indices=row._indices(), values= row._values(),
                              size=(self.__size, self.__size))
@@ -42,9 +42,7 @@ class MeshUnion:
     def get_groups(self, tensor_mask):
         ## Max comp
         mask_index = torch.squeeze((tensor_mask == True).nonzero()).to(self.device)
-
-        start_time = time.time()
-        return myindexrowselect(self.groups, mask_index)#.cuda()
+        return myindexrowselect(self.groups, mask_index, self.device)
 
 
     def rebuild_features_average(self, features, mask, target_edges):
@@ -64,7 +62,7 @@ class MeshUnion:
     def prepare_groups(self, features, mask):
         mask_index = torch.squeeze((torch.from_numpy(mask) == True).nonzero())
 
-        self.groups = myindexrowselect(self.groups, mask_index).transpose(1,0)
+        self.groups = myindexrowselect(self.groups, mask_index, self.device).transpose(1,0)
         padding_a = features.shape[1] - self.groups.shape[0]
 
         if padding_a > 0:

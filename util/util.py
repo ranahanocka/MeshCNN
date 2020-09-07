@@ -114,7 +114,7 @@ def pad_with(vector, pad_width, iaxis, kwargs):
 
 
 
-def myindexrowselect(groups, mask_index):
+def myindexrowselect(groups, mask_index, device):
 
     sparseIndices = groups._indices()
     newIndices = []
@@ -126,7 +126,7 @@ def myindexrowselect(groups, mask_index):
         #Get rows by index
         sparseRow = [sparseIndices[:, value] for value in index]
         sparseRow = torch.cat(sparseRow,1)[1]
-        singleRowIndices = torch.squeeze(torch.full((1,len(sparseRow)),i, dtype=torch.long),0)
+        singleRowIndices = torch.squeeze(torch.full((1,len(sparseRow)),i, dtype=torch.long),0).to(device)
         indices = torch.stack((singleRowIndices,sparseRow))
         newIndices.append(indices)
 
