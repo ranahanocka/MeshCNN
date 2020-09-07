@@ -37,41 +37,40 @@ class MeshUnpool(nn.Module):
         unroll_mat = torch.stack(groups)
         occurrences = [self.pad_occurrences(mesh.get_occurrences()) for mesh in meshes]
         occurrences = torch.unsqueeze(torch.stack(occurrences, dim=0), dim=1)
+
+        #Sparse division only possible for scalars
+        #Iterate over dense batches
+
         imin = 0
         length = 500
-
+        result = []
         while imin <= unroll_mat.size()[2]:
             try:
-                slicesgroup = unroll_mat.narrow_copy(2, imin, length).to_dense().to(self.device)
-                occ = occurrences.narrow_copy(2, imin, length).to(self.device)
-                res = (slicesgroup / occ).to_sparse()
+                sliceUnroll_mat = unroll_mat.narrow_copy(2, imin, length).to_dense().to(self.device)
+                sliceOcc = occurrences.narrow_copy(2, imin, length).to(self.device)
+                sliceResult = (sliceUnroll_mat  / sliceOcc).to_sparse()
                 imin = imin + 500
 
-                try:
-                    allgroups = torch.cat((allgroups, res), -1)
-                except NameError:
-                    allgroups = res
+                result.append(sliceResult)
 
             except Exception:
                 length = unroll_mat.size()[2] - imin
 
-        unroll_mat = allgroups.to(features.device)
+        unroll_mat = torch.cat(result, -1).to(features.device)
 
         for mesh in meshes:
             mesh.unroll_gemm()
-        one = unroll_mat.transpose(1,2)
-        two = features.transpose(1,2)
 
-        mauz =  torch.empty(size=(batch_size, features.shape[1], unroll_mat.shape[2]))
+        #Fix Matmul, due to missing strides of sparse representation
+        result = []
+        unroll_mat = unroll_mat.transpose(1,2)
+        features = features.transpose(1,2)
 
-        for m in range(batch_size):
-            ml = torch.matmul(one[m], two[m])
-            if m == 0:
-                mauz  = torch.unsqueeze(ml, dim=0)
-            else:
-                mauz = torch.cat((mauz, torch.unsqueeze(ml, dim=0)), dim=0)
-
-        mauz = mauz.transpose(1,2)
-        return mauz
+        #iterate over batches
+        for batch in range(batch_size):
+            mat = torch.matmul(unroll_mat[batch], features[batch])
+            mat = torch.unsqueeze(mat, dim=0)
+            result.append(mat)
+        return torch.cat(result, dim=0).transpose(1,2)
 
 
