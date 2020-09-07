@@ -5,6 +5,7 @@ from models import create_model
 from util.writer import Writer
 from test import run_test
 
+
 if __name__ == '__main__':
     opt = TrainOptions().parse()
     dataset = DataLoader(opt)
@@ -40,7 +41,6 @@ if __name__ == '__main__':
                       (epoch, total_steps))
                 model.save_network('latest')
 
-            iter_data_time = time.time()
         if epoch % opt.save_epoch_freq == 0:
             print('saving the model at the end of epoch %d, iters %d' %
                   (epoch, total_steps))

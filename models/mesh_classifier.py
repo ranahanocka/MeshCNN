@@ -1,7 +1,7 @@
 import torch
 from . import networks
 from os.path import join
-from util.util import seg_accuracy, print_network, intersection_over_union, mean_iou_calc
+from util.util import seg_accuracy, print_network, mean_iou_calc
 
 
 class ClassifierModel:
