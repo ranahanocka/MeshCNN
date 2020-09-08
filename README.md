@@ -32,7 +32,8 @@ cd MedMeshCNN
 ```
 - Install dependencies: [PyTorch](https://pytorch.org/) version 1.4. <i> Optional </i>: [tensorboardX](https://github.com/lanpa/tensorboardX) for training plots.
   - Via new conda environment `conda env create -f environment.yml` (creates an environment called meshcnn)
-  
+
+
 ### 3D Shape Segmentation on Humans
 Download the dataset
 ```bash
@@ -60,7 +61,14 @@ Some segmentation result examples:
 
 <img src="/docs/imgs/shrec__10_0.png" height="150px"/> <img src="/docs/imgs/shrec__14_0.png" height="150px"/> <img src="/docs/imgs/shrec__2_0.png" height="150px"/> 
 
-# More Info
+### Hyperparameters
+
+To alter the values of the hyperparameters, change the bash scripts above accordingly. 
+This also includes the weight vector for the weighted loss function, which requires one weight per class. 
+
+
+
+### More Info
 
 
 Check out the corresponding [PartSegmentationToolbox](https://github.com/LSnyd/PartSegmentationToolbox) to find further information on how to create a segmentation ground truth as illustrated below. You can also find helper scripts that scale segmentation results to different mesh resolutions. 
