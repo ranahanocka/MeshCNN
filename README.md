@@ -1,10 +1,10 @@
-<img src='docs/imgs/alien.gif' align="right" width=325>
+<img src='docs/imgs/C60.png' align="right">
 <br><br><br>
 
 
 # MedMeshCNN
 
-MedMeshCNN is an expansion of [MeshCNN](https://ranahanocka.github.io/MeshCNN/) proposed by  [Rana Hanocka](https://www.cs.tau.ac.il/~hanocka/) et al. <br/>
+MedMeshCNN is an expansion of [MeshCNN](https://ranahanocka.github.io/MeshCNN/) proposed by  [Rana Hanocka](https://www.cs.tau.ac.il/~hanocka/) et al. 
 It enables the use of [MeshCNN](https://ranahanocka.github.io/MeshCNN/) for medical surface meshes through an improved memory efficiency that allows to 
 to keep patient-specific properties and fine-grained patterns during segmentation. Furthermore, a weighted loss function improves the performance of MedMeshCNN on imbalanced datasets that are often caused by pathological appearances. 
 
@@ -30,14 +30,6 @@ MeshCNN is a general-purpose deep neural network for 3D triangular meshes, which
 The code of MeshCNN was written by [Rana Hanocka](https://www.cs.tau.ac.il/~hanocka/) and [Amir Hertz](http://pxcm.org/) with support from [Noa Fish](http://www.cs.tau.ac.il/~noafish/).
 
 # Getting Started
-
-```bash
-bash ./scripts/human_seg/get_data.sh
-bash ./scripts/human_seg/train.sh
-bash ./scripts/human_seg/get_pretrained.sh
-bash ./scripts/human_seg/test.sh
-bash ./scripts/human_seg/view.sh
-```
 
 ### Installation
 - Clone this repo:
