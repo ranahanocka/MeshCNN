@@ -31,6 +31,7 @@ The code of MeshCNN was written by [Rana Hanocka](https://www.cs.tau.ac.il/~hano
 
 # Getting Started
 
+
 ### Installation
 - Clone this repo:
 ```bash
@@ -68,7 +69,14 @@ Some segmentation result examples:
 <img src="/docs/imgs/shrec__10_0.png" height="150px"/> <img src="/docs/imgs/shrec__14_0.png" height="150px"/> <img src="/docs/imgs/shrec__2_0.png" height="150px"/> 
 
 # More Info
-Check out the [MeshCNN wiki](https://github.com/ranahanocka/MeshCNN/wiki) for more details. Specifically, see info on [segmentation](https://github.com/ranahanocka/MeshCNN/wiki/Segmentation) and [data processing](https://github.com/ranahanocka/MeshCNN/wiki/Data-Processing).
+
+
+Check out the corresponding [PartSegmentationToolbox](https://github.com/LSnyd/PartSegmentationToolbox) to find further information on how to create a  segmentation ground truth as illustrated below and helper scripts to scale segmentation results to different mesh resultions. 
+
+<img src='docs/imgs/C060_seg_fine.png' align="right">
+
+Also check out the [MeshCNN wiki](https://github.com/ranahanocka/MeshCNN/wiki) for more details. Specifically, see info on [segmentation](https://github.com/ranahanocka/MeshCNN/wiki/Segmentation) and [data processing](https://github.com/ranahanocka/MeshCNN/wiki/Data-Processing).
+
 
 # Questions / Issues
-If you have questions or issues running this code, please open an issue so we can know to fix it.
+If you have questions or issues running this code, please open an issue.
