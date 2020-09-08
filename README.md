@@ -71,9 +71,9 @@ Some segmentation result examples:
 # More Info
 
 
-Check out the corresponding [PartSegmentationToolbox](https://github.com/LSnyd/PartSegmentationToolbox) to find further information on how to create a  segmentation ground truth as illustrated below and helper scripts to scale segmentation results to different mesh resultions. 
+Check out the corresponding [PartSegmentationToolbox](https://github.com/LSnyd/PartSegmentationToolbox) to find further information on how to create a segmentation ground truth as illustrated below. You can also find helper scripts that scale segmentation results to different mesh resolutions. 
 
-<img src='docs/imgs/C060_seg_fine.png' align="right">
+<img src='docs/imgs/C060_seg_fine.png' align="center" width="350px">
 
 Also check out the [MeshCNN wiki](https://github.com/ranahanocka/MeshCNN/wiki) for more details. Specifically, see info on [segmentation](https://github.com/ranahanocka/MeshCNN/wiki/Segmentation) and [data processing](https://github.com/ranahanocka/MeshCNN/wiki/Data-Processing).
 
