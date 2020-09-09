@@ -23,7 +23,7 @@ class MeshUnion:
         row = myindexrowselect(self.groups, index, self.device).to(self.device)
         row._indices()[0] = torch.tensor(target)
         row = torch.sparse_coo_tensor(indices=row._indices(), values= row._values(),
-                             size=(self.__size, self.__size))
+                             size=(self.__size, self.__size), device=self.device)
         self.groups = self.groups.add(row)
         self.groups = self.groups.coalesce()
         del index, row
