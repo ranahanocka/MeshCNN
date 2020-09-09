@@ -15,7 +15,7 @@ class MeshUnion:
         self.values = torch.ones(n, dtype= torch.float)
         self.groups = torch.sparse_coo_tensor(indices= torch.stack((torch.arange(n), torch.arange(n)),dim=0), values= self.values,
 
-                              size=(self.__size, self.__size), device=device).to(self.device)
+                              size=(self.__size, self.__size), device=self.device)
 
 
     def union(self, source, target):
