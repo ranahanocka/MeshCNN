@@ -4,6 +4,8 @@ from data import DataLoader
 from models import create_model
 from util.writer import Writer
 from test import run_test
+import torch
+
 
 if __name__ == '__main__':
     opt = TrainOptions().parse()
@@ -21,6 +23,11 @@ if __name__ == '__main__':
         epoch_iter = 0
 
         for i, data in enumerate(dataset):
+
+            # for mesh, label in zip(data['mesh'], data['label']):
+            #     mesh.export_folder = '/home/ihahanov/Projects/meshcnn/datasets/roof_seg/test'
+            #     mesh.export_segments(label)
+
             iter_start_time = time.time()
             if total_steps % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
@@ -45,7 +52,7 @@ if __name__ == '__main__':
             print('saving the model at the end of epoch %d, iters %d' %
                   (epoch, total_steps))
             model.save_network('latest')
-            model.save_network(epoch)
+            # model.save_network(epoch)
 
         print('End of epoch %d / %d \t Time Taken: %d sec' %
               (epoch, opt.niter + opt.niter_decay, time.time() - epoch_start_time))
@@ -56,5 +63,7 @@ if __name__ == '__main__':
         if epoch % opt.run_test_freq == 0:
             acc = run_test(epoch)
             writer.plot_acc(acc, epoch)
+
+        torch.cuda.empty_cache()
 
     writer.close()

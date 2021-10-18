@@ -5,6 +5,27 @@ from util.util import is_mesh_file, pad
 import numpy as np
 from models.layers.mesh import Mesh
 
+
+import trimesh as tm
+def edges_to_path(edges, color=tm.visual.color.random_color()):
+    lines = np.asarray(edges)
+    args = tm.path.exchange.misc.lines_to_path(lines)
+    colors = [color for _ in range(len(args['entities']))]
+    path = tm.path.Path3D(**args, colors=colors)
+    return path
+
+
+def show_mesh(mesh, label,  colors=[[0,0,0,255], [120,120,120,255]]):
+    colors = np.array(colors)
+    edges = mesh.vs[mesh.edges]
+    tm.Scene([edges_to_path(e, colors[int(l)]) for e, l in zip(edges, label)]).show()
+
+
+def show_vertices(mesh, label,  colors=[[0,0,0,255], [120,120,120,255]]):
+    colors = np.array(colors)
+    tm.PointCloud(mesh.vs, colors=np.array(colors)[label]).show()
+
+
 class SegmentationData(BaseDataset):
 
     def __init__(self, opt):
