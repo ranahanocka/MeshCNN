@@ -24,10 +24,6 @@ if __name__ == '__main__':
 
         for i, data in enumerate(dataset):
 
-            # for mesh, label in zip(data['mesh'], data['label']):
-            #     mesh.export_folder = '/home/ihahanov/Projects/meshcnn/datasets/roof_seg/test'
-            #     mesh.export_segments(label)
-
             iter_start_time = time.time()
             if total_steps % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
