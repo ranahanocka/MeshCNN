@@ -11,7 +11,7 @@ class BaseOptions:
 
     def initialize(self):
         # data params
-        self.parser.add_argument('--dataroot', required=True, help='path to meshes (should have subfolders train, test)')
+        self.parser.add_argument('--dataroot', required=False, help='path to meshes (should have subfolders train, test)')
         self.parser.add_argument('--dataset_mode', choices={"classification", "segmentation"}, default='classification')
         self.parser.add_argument('--ninput_edges', type=int, default=750, help='# of input edges (will include dummy edges)')
         self.parser.add_argument('--max_dataset_size', type=int, default=float("inf"), help='Maximum number of samples per epoch')
