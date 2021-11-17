@@ -23,6 +23,17 @@ def show_edges(mesh, label, colors=[[0, 0, 0, 255], [120, 120, 120, 255]]):
     tm.Scene([edges_to_path(e, colors[int(l)]) for e, l in zip(edges, label)]).show()
 
 
+def show_mesh(mesh, label):
+    edges = mesh.edges
+    vertices = mesh.vs
+    vertex_label = np.zeros(len(vertices))
+    for e_l, e in zip(label[0], edges):
+        if e_l == 1:
+            vertex_label[e] = 1
+    faces = mesh.faces
+    vertex_colors = np.array([[255, 100, 0, 255], [0, 100, 255, 255]])[vertex_label.astype(int)]
+    tm.Trimesh(faces=faces, vertices=vertices, vertex_colors=vertex_colors).show()
+
 def run_test(epoch=-1):
     print('Running Test')
     opt = TestOptions().parse()
@@ -35,20 +46,12 @@ def run_test(epoch=-1):
     for i, data in enumerate(dataset):
         mesh = deepcopy(data['mesh'][0])
 
-        show_mesh(mesh, data['label'][0])
-        # model.set_input(data)
+        # show_mesh(mesh, data['label'][0])
+        model.set_input(data)
         #
         pred_class = model.forward().max(1)[1]
         # show_mesh(mesh, pred_class[0])
-        edges = mesh.edges
-        vertices = mesh.vs
-        vertex_label = np.zeros(len(vertices))
-        for e_l, e in zip(pred_class[0], edges):
-            if e_l == 1:
-                vertex_label[e] = 1
-        faces = mesh.faces
-        vertex_colors = np.array([[255,100,0,255], [0,100,255,255]])[vertex_label.astype(int)]
-        tm.Trimesh(faces=faces, vertices=vertices, vertex_colors=vertex_colors).show()
+        show_mesh(mesh, label=pred_class)
 
 if __name__ == '__main__':
     run_test()
