@@ -50,6 +50,7 @@ class SegmentationData(BaseDataset):
         mesh = Mesh(file=path, opt=self.opt, hold_history=True, export_folder=self.opt.export_folder)
         meta = {}
         meta['mesh'] = mesh
+        meta['path'] = path
         label = read_seg(self.seg_paths[index]) - self.offset
         label = pad(label, self.opt.ninput_edges, val=-1, dim=0)
         meta['label'] = label
