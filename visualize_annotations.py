@@ -5,7 +5,7 @@ from util.writer import Writer
 import trimesh as tm
 import numpy as np
 from copy import deepcopy
-from data.segmentation_data import show_mesh
+from visualize import show_mesh
 import trimesh as tm
 
 
@@ -29,9 +29,9 @@ def run_test(epoch=-1):
     opt.serial_batches = True  # no shuffle
     dataset = DataLoader(opt)
     for i, data in enumerate(dataset):
-        mesh = deepcopy(data['mesh'][0])
+        print(data['path'])
 
-        show_mesh(mesh, data['label'][0])
+        show_mesh(data['mesh'][0], data['label'])
 
 if __name__ == '__main__':
     run_test()

@@ -11,5 +11,6 @@ for v in obdata.vertices:
     else:
         label.append(str(0))
 
-with open('/home/ihahanov/Projects/meshcnn/datasets/roof_seg/vseg/2620 Benefield Simplified + Annotated.eseg', 'w') as f:
+with open('/home/ihahanov/Projects/roof-measurements/dl_roof_extraction/meshcnn'
+          '/datasets/roof_seg/vseg/2510 Garrison Simplified + Annotated.eseg', 'w') as f:
     f.write('\n'.join(label))
