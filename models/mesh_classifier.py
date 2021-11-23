@@ -1,4 +1,6 @@
 import torch
+import torchmetrics
+
 from . import networks
 from os.path import join
 from util.util import seg_accuracy, print_network
@@ -114,6 +116,18 @@ class ClassifierModel:
             self.export_segmentation(pred_class.cpu())
             correct = self.get_accuracy(pred_class, label_class)
         return correct, len(label_class)
+
+    def get_metrics(self, acc_metric, f1_metric, iou_metric):
+        with torch.no_grad():
+            out = self.forward()
+            pred_class = out.data.max(1)[1]
+            label_class = self.labels
+            label_class[label_class == -1] = 0
+
+            acc = acc_metric(pred_class, label_class)
+            f1 = f1_metric(pred_class, label_class)
+            iou = iou_metric(pred_class, label_class)
+        return acc, f1, iou
 
     def get_accuracy(self, pred, labels):
         """computes accuracy for classification / segmentation """

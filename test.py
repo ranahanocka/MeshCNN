@@ -1,13 +1,15 @@
+from copy import deepcopy
+
+import numpy as np
+import torchmetrics
+import trimesh as tm
+
 from options.test_options import TestOptions
 from data import DataLoader
 from models import create_model
 from util.writer import Writer
-import trimesh as tm
-import numpy as np
-from copy import deepcopy
 
 
-import trimesh as tm
 def edges_to_path(edges, color=tm.visual.color.random_color()):
     lines = np.asarray(edges)
     args = tm.path.exchange.misc.lines_to_path(lines)
@@ -52,6 +54,48 @@ def run_test(epoch=-1):
         writer.update_counter(ncorrect, nexamples)
     writer.print_acc(epoch, writer.acc)
     return writer.acc
+
+
+def run_test(epoch=-1):
+    print('Running Test')
+    opt = TestOptions().parse()
+    opt.serial_batches = True  # no shuffle
+    dataset = DataLoader(opt)
+    model = create_model(opt)
+    writer = Writer(opt)
+    # test
+    writer.reset_counter()
+
+    acc_metric = torchmetrics.Accuracy()
+    f1_metric = torchmetrics.F1(num_classes=2, mdmc_average='samplewise')
+    iou_metric = torchmetrics.IoU(2)
+    for i, data in enumerate(dataset):
+        mesh = deepcopy(data['mesh'][0])
+        model.set_input(data)
+
+        # pred_class = model.forward().max(1)[1]
+        # # show_mesh(mesh, pred_class[0])
+        # edges = mesh.edges
+        # vertices = mesh.vs
+        # vertex_label = np.zeros(len(vertices))
+        # for e_l, e in zip(pred_class[0], edges):
+        #     if e_l == 1:
+        #         vertex_label[e] = 1
+        # faces = mesh.faces
+        # vertex_colors = np.array([tm.visual.random_color(), tm.visual.random_color()])[vertex_label.astype(int)]
+        # tm.Trimesh(faces=faces, vertices=vertices, vertex_colors=vertex_colors).show()
+
+        acc, f1, iou = model.get_metrics(acc_metric, f1_metric, iou_metric)
+        # ncorrect, nexamples = model.test()
+        #
+        # writer.update_counter(ncorrect, nexamples)
+        print(f"Metrics on 3D model {i} - accuracy: {acc}, F1: {f1}, IoU: {iou}")
+    # writer.print_acc(epoch, writer.acc)
+    total_acc = acc_metric.compute()
+    total_f1 = f1_metric.compute()
+    total_iou = iou_metric.compute()
+    print(f'epoch: {epoch}, TEST ACC: {total_acc}, F1: {total_f1}, IoU: {total_iou}')
+    # return writer.acc
 
 
 if __name__ == '__main__':
