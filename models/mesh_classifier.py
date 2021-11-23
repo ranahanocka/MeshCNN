@@ -123,6 +123,8 @@ class ClassifierModel:
             pred_class = out.data.max(1)[1]
             label_class = self.labels
             label_class[label_class == -1] = 0
+            pred_class = pred_class.to(self.device)
+            label_class = label_class.to(self.device)
 
             acc = acc_metric(pred_class, label_class)
             f1 = f1_metric(pred_class, label_class)
