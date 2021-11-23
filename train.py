@@ -3,7 +3,7 @@ from options.train_options import TrainOptions
 from data import DataLoader
 from models import create_model
 from util.writer import Writer
-from test import run_test
+from test import run_test, run_test_on_test_data
 import torch
 
 
@@ -57,8 +57,10 @@ if __name__ == '__main__':
             writer.plot_model_wts(model, epoch)
 
         if epoch % opt.run_test_freq == 0:
-            acc = run_test(epoch)
-            writer.plot_acc(acc, epoch)
+            # acc = run_test(epoch)
+            run_test(opt, epoch, text='TRAIN')
+            run_test_on_test_data(epoch=epoch)
+            # writer.plot_acc(acc, epoch)
 
         torch.cuda.empty_cache()
 
