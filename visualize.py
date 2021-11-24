@@ -7,6 +7,7 @@ import numpy as np
 from copy import deepcopy
 from data.segmentation_data import show_mesh
 import trimesh as tm
+import torch
 
 
 def edges_to_path(edges, color=tm.visual.color.random_color()):
@@ -44,6 +45,7 @@ def run_test(epoch=-1):
     # test
     writer.reset_counter()
     for i, data in enumerate(dataset):
+        torch.cuda.empty_cache()
         mesh = deepcopy(data['mesh'][0])
 
         # show_mesh(mesh, data['label'][0])
@@ -52,6 +54,7 @@ def run_test(epoch=-1):
         pred_class = model.forward().max(1)[1]
         # show_mesh(mesh, pred_class[0])
         show_mesh(mesh, label=pred_class)
+        torch.cuda.empty_cache()
 
 if __name__ == '__main__':
     run_test()
