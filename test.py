@@ -68,8 +68,12 @@ def run_test(epoch=-1, data_phase='test'):
     # test
     writer.reset_counter()
 
-    acc_metric = torchmetrics.Accuracy(num_classes=2, average='macro').to(model.device)
-    iou_metric = torchmetrics.IoU(num_classes=2).to(model.device)
+    metrics = [
+        torchmetrics.Accuracy(num_classes=2, average='macro').to(model.device),
+        torchmetrics.Accuracy(num_classes=2).to(model.device),
+        torchmetrics.IoU(num_classes=2).to(model.device),
+        torchmetrics.F1(num_classes=2, average='macro').to(model.device)
+    ]
     with torch.no_grad():
         for i, data in enumerate(dataset):
             model.set_input(data)
@@ -82,13 +86,16 @@ def run_test(epoch=-1, data_phase='test'):
             label_class = label_class[not_padding]
             pred_class = pred_class[not_padding]
 
-            acc = acc_metric(pred_class, label_class)
-            iou = iou_metric(pred_class, label_class)
+            for m in metrics:
+                m(pred_class, label_class)
             # print(f"Metrics on 3D model {i} - accuracy: {acc}, F1: {f1}, IoU: {iou}")
     # writer.print_acc(epoch, writer.acc)
-    total_acc = acc_metric.compute()
-    total_iou = iou_metric.compute()
-    print(f'epoch: {epoch}, {data_phase.upper()} ACC: {total_acc}, IoU: {total_iou}')
+    metric_vals = []
+    for m in metrics:
+        m_name = str(m).split('(')[0]
+        metric_vals.append(f'{m_name}:  {m.compute()}')
+    metrics_str = ' '.join(metric_vals)
+    print(f'epoch: {epoch}, {data_phase.upper()} {metrics_str}')
 
 
 if __name__ == '__main__':
