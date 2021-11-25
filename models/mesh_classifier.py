@@ -34,7 +34,7 @@ class ClassifierModel:
         self.net = networks.define_classifier(opt.input_nc, opt.ncf, opt.ninput_edges, opt.nclasses, opt,
                                               self.gpu_ids, opt.arch, opt.init_type, opt.init_gain)
         self.net.train(self.is_train)
-        self.criterion = networks.define_loss(opt).to(self.device)
+        self.criterion = networks.define_loss(opt)
 
         if self.is_train:
             self.optimizer = torch.optim.Adam(self.net.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
