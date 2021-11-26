@@ -66,3 +66,15 @@ def calculate_entropy(np_array):
             entropy -= a * np.log(a)
     entropy /= np.log(np_array.shape[0])
     return entropy
+
+
+def remove_padding(label_class, pred_class):
+    not_padding = label_class != -1
+    label_class = label_class[not_padding]
+    label_class = label_class.unsqueeze(0)
+
+    not_padding = not_padding.repeat(2, 1)
+    not_padding = not_padding.unsqueeze(0)
+    pred_class = pred_class[not_padding]
+    pred_class = pred_class.reshape([1, 2, int(pred_class.size()[0] / 2)])
+    return label_class, pred_class

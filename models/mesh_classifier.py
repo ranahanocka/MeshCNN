@@ -3,7 +3,7 @@ import torchmetrics
 
 from . import networks
 from os.path import join
-from util.util import seg_accuracy, print_network
+from util.util import seg_accuracy, print_network, remove_padding
 
 
 class ClassifierModel:
@@ -60,7 +60,8 @@ class ClassifierModel:
         return out
 
     def backward(self, out):
-        self.loss = self.criterion(out, self.labels)
+        label_class, pred_class = remove_padding(self.labels, out)
+        self.loss = self.criterion(pred_class, label_class)
         self.loss.backward()
 
     def optimize_parameters(self):
