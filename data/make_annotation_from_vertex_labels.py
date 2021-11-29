@@ -161,8 +161,7 @@ def show_mesh(edges, vs, label,  colors=[[0,0,0,255], [120,120,120,255]]):
 
 
 def create_files(path):
-    print("path", glob.glob(os.path.join(path, 'train/*.obj')))
-    for filename in glob.glob(os.path.join(path, 'train/*.obj')):
+    for filename in glob.glob(os.path.join(path, 'obj/*.obj')):
         basename = os.path.splitext(os.path.basename(filename))[0]
         v_label_name = os.path.join(os.path.join(path, 'vseg'), basename + '.eseg')
         label_name = os.path.join(os.path.join(path, 'seg'), basename + '.eseg')

@@ -23,16 +23,17 @@ class MeshSegmenter(pl.LightningModule):
         self.opt = opt
         self.model = create_model(opt)
         self.criterion = ce_jaccard
-        self.train_metrics = torch.nn.ModuleList([
-            torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro'),
-            torchmetrics.IoU(num_classes=opt.nclasses),
-            torchmetrics.F1(num_classes=opt.nclasses, average='macro')
-        ])
-        self.val_metrics = torch.nn.ModuleList([
-            torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro'),
-            torchmetrics.IoU(num_classes=opt.nclasses),
-            torchmetrics.F1(num_classes=opt.nclasses, average='macro')
-        ])
+        if self.training:
+            self.train_metrics = torch.nn.ModuleList([
+                torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro'),
+                torchmetrics.IoU(num_classes=opt.nclasses),
+                torchmetrics.F1(num_classes=opt.nclasses, average='macro')
+            ])
+            self.val_metrics = torch.nn.ModuleList([
+                torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro'),
+                torchmetrics.IoU(num_classes=opt.nclasses),
+                torchmetrics.F1(num_classes=opt.nclasses, average='macro')
+            ])
 
     def training_step(self, batch, idx):
         self.model.set_input(batch)

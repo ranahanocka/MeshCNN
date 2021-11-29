@@ -166,9 +166,15 @@ def ce_dice(true, pred, log=False, w1=1, w2=1):
 
 
 def ce_jaccard(true, pred, weights=torch.tensor([0.5, 2])):
-    # return jaccard_loss(true, pred)
-    return ce_loss(true, pred, weights.to(pred.device), ignore=-1) + \
-           jaccard_loss(true.unsqueeze(-1).unsqueeze(1), pred.unsqueeze(-1))
+    num_classses = pred.shape[1]
+    true = true.view(-1)
+    pred = pred.view(num_classses, -1)
+    not_padding = true != -1
+    true = true[not_padding]
+    pred = pred[:, not_padding]
+
+    return ce_loss(true.unsqueeze(0), pred.unsqueeze(0), weights.to(pred.device), ignore=-1) + \
+           jaccard_loss(true.view(1, 1, -1, 1), pred.view(1, num_classses, -1, 1))
 
 
 def focal_loss(true, pred):
