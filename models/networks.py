@@ -115,10 +115,11 @@ def define_loss(opt):
     if opt.dataset_mode == 'classification':
         loss = torch.nn.CrossEntropyLoss()
     elif opt.dataset_mode == 'segmentation':
-        loss_ce = torch.nn.CrossEntropyLoss(ignore_index=-1, weight=torch.tensor([0.5, 2]))
+        # loss_ce = torch.nn.CrossEntropyLoss(ignore_index=-1, weight=torch.tensor([0.5, 2]))
         loss_dice = lambda out, labels: dice_loss(labels.unsqueeze(1).unsqueeze(-1), out.unsqueeze(-1))
+        device = torch.device('cuda:{}'.format(opt.gpu_ids[0])) if opt.gpu_ids else torch.device('cpu')
+        loss_ce = lambda out, labels: ce_loss(labels.squeeze(), out.squeeze().transpose(0,1), weights=torch.FloatTensor([0.5, 2]).to(device))
         loss = lambda out, labels: loss_ce(out, labels) + loss_dice(out, labels)
-        # loss = lambda out, labels: ce_loss(labels.squeeze(), out.squeeze().transpose(0,1), weights=torch.FloatTensor([0.5, 2]))
     return loss
 
 ##############################################################################
