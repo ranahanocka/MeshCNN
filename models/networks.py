@@ -7,7 +7,7 @@ from models.layers.mesh_conv import MeshConv
 import torch.nn.functional as F
 from models.layers.mesh_pool import MeshPool
 from models.layers.mesh_unpool import MeshUnpool
-from .losses import ce_jaccard, dice_loss
+from .losses import ce_jaccard, dice_loss, jaccard_loss, ce_loss, bce_loss
 
 
 ###############################################################################
@@ -115,8 +115,10 @@ def define_loss(opt):
     if opt.dataset_mode == 'classification':
         loss = torch.nn.CrossEntropyLoss()
     elif opt.dataset_mode == 'segmentation':
-        # loss = torch.nn.CrossEntropyLoss(ignore_index=-1, weight=torch.tensor([0.5, 2]))
-        loss = lambda out, labels: dice_loss(labels.unsqueeze(1).unsqueeze(-1), out.unsqueeze(-1))
+        loss_ce = torch.nn.CrossEntropyLoss(ignore_index=-1, weight=torch.tensor([0.5, 2]))
+        loss_dice = lambda out, labels: dice_loss(labels.unsqueeze(1).unsqueeze(-1), out.unsqueeze(-1))
+        loss = lambda out, labels: loss_ce(out, labels) + loss_dice(out, labels)
+        # loss = lambda out, labels: ce_loss(labels.squeeze(), out.squeeze().transpose(0,1), weights=torch.FloatTensor([0.5, 2]))
     return loss
 
 ##############################################################################
