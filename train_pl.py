@@ -2,24 +2,18 @@ import argparse
 import os
 import random
 
-import cv2
 import matplotlib.pyplot as plt
 import torch
 import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader
 import glob
-from torchvision import transforms as T
-from torchvision import transforms
 import json
 import numpy as np
-import imgaug as ia
-from utils.image_processing import resize_image, pad_image
-import torchmodels
 import torchmetrics
-from utils.image_processing import enhance_contrast
-from imgaug import augmenters as iaa
-import pandas as pd
 from options.pl_options import PLOptions
+from data import DataLoader
+from models import create_model
+from models.losses import ce_jaccard
 
 
 class MeshSegmenter(pl.LightningModule):
@@ -28,16 +22,17 @@ class MeshSegmenter(pl.LightningModule):
         super().__init__()
         self.opt = opt
         self.model = create_model(opt)
-        self.train_metrics = [
-            torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro').to(model.device),
-            torchmetrics.IoU(num_classes=opt.nclasses).to(model.device),
-            torchmetrics.F1(num_classes=opt.nclasses, average='macro').to(model.device)
-        ]
-        self.val_metrics = [
-            torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro').to(model.device),
-            torchmetrics.IoU(num_classes=opt.nclasses).to(model.device),
-            torchmetrics.F1(num_classes=opt.nclasses, average='macro').to(model.device)
-        ]
+        self.criterion = ce_jaccard
+        self.train_metrics = torch.nn.ModuleList([
+            torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro'),
+            torchmetrics.IoU(num_classes=opt.nclasses),
+            torchmetrics.F1(num_classes=opt.nclasses, average='macro')
+        ])
+        self.val_metrics = torch.nn.ModuleList([
+            torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro'),
+            torchmetrics.IoU(num_classes=opt.nclasses),
+            torchmetrics.F1(num_classes=opt.nclasses, average='macro')
+        ])
 
     def training_step(self, batch, idx):
         self.model.set_input(batch)
@@ -45,7 +40,7 @@ class MeshSegmenter(pl.LightningModule):
         loss = self.criterion(self.model.labels, out)
 
         pred_class = out.data.max(1)[1]
-        not_padding = label_class != -1
+        not_padding = self.model.labels != -1
         label_class = self.model.labels[not_padding]
         pred_class = pred_class[not_padding]
 
@@ -62,7 +57,7 @@ class MeshSegmenter(pl.LightningModule):
         loss = self.criterion(self.model.labels, out)
 
         pred_class = out.data.max(1)[1]
-        not_padding = label_class != -1
+        not_padding = self.model.labels != -1
         label_class = self.model.labels[not_padding]
         pred_class = pred_class[not_padding]
 
@@ -93,10 +88,10 @@ class MeshSegmenter(pl.LightningModule):
         return DataLoader(self.opt)
 
     def configure_optimizers(self):
-        opt = torch.optim.SGD(self.model.parameters(), lr=self.kwargs.get('learning_rate', 1e-3),
+        opt = torch.optim.SGD(self.model.net.parameters(), lr=self.opt.lr,
                               momentum=0.9,
                               weight_decay=0.0002)
-        sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.kwargs['max_epochs'] * 3)
+        sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.opt.max_epochs * 2)
         return [opt], [sched]
 
 
@@ -105,19 +100,9 @@ def argument_parser():
 
     parser.add_argument('--gpus', type=int, default=1)
     parser.add_argument('--max_epochs', type=int, default=60)
-    parser.add_argument('--learning_rate', default=1e-3)
-    parser.add_argument('--max_image_size', default=128)
-    parser.add_argument('--num_classes', default=3)
-    parser.add_argument('--pretrained', default=True)
-
-    parser.add_argument('--train_data', default='../../data/windows/set_1/train')
-    parser.add_argument('--test_data', default='../../data/windows/set_1/test')
-    parser.add_argument('--label_file', default='../../data/windows/labels.txt')
-    parser.add_argument('--train_augmentation', default=True)
 
     parser.add_argument('--progress_bar_refresh_rate', type=int, default=20)
-    parser.add_argument('--default_root_dir', default='../../models/test_classification/densenet161/', help='pytorch-lightning log path')
-    # parser.add_argument('--resume_from_checkpoint', default='../../models/test_classification/densenet121/lightning_logs/version_56/checkpoints/epoch=44-val_acc_epoch=0.98.ckpt')
+    parser.add_argument('--default_root_dir', default='checkpoints/', help='pytorch-lightning log path')
     return parser
 
 
