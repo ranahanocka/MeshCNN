@@ -34,10 +34,12 @@ class ClassifierModel:
         self.net = networks.define_classifier(opt.input_nc, opt.ncf, opt.ninput_edges, opt.nclasses, opt,
                                               self.gpu_ids, opt.arch, opt.init_type, opt.init_gain)
         self.net.train(self.is_train)
-        self.criterion = networks.define_loss(opt).to(self.device)
+        from .losses import ce_jaccard
+        self.criterion = ce_jaccard#networks.define_loss(opt).to(self.device)
 
         if self.is_train:
-            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+            # self.optimizer = torch.optim.Adam(self.net.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.optimizer = torch.optim.SGD(self.net.parameters(), lr=opt.lr, momentum=0.9, weight_decay=0.0001)
             self.scheduler = networks.get_scheduler(self.optimizer, opt)
             print_network(self.net)
 
@@ -60,7 +62,7 @@ class ClassifierModel:
         return out
 
     def backward(self, out):
-        self.loss = self.criterion(out, self.labels)
+        self.loss = self.criterion(self.labels, out)
         self.loss.backward()
 
     def optimize_parameters(self):
@@ -86,7 +88,6 @@ class ClassifierModel:
         if hasattr(state_dict, '_metadata'):
             del state_dict._metadata
         net.load_state_dict(state_dict)
-
 
     def save_network(self, which_epoch):
         """save model to disk"""
