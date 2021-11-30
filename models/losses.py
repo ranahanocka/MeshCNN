@@ -173,7 +173,10 @@ def ce_jaccard(true, pred, weights=torch.tensor([0.5, 2])):
     true = true[not_padding]
     pred = pred[:, not_padding]
 
-    return ce_loss(true.unsqueeze(0), pred.unsqueeze(0), weights.to(pred.device), ignore=-1) + \
+    if weights is not None:
+        weights = torch.tensor(weights).to(pred.device)
+
+    return ce_loss(true.unsqueeze(0), pred.unsqueeze(0), weights, ignore=-1) + \
            jaccard_loss(true.view(1, 1, -1, 1), pred.view(1, num_classses, -1, 1))
 
 

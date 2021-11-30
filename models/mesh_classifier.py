@@ -72,16 +72,23 @@ class ClassifierModel:
         """load model from disk"""
         save_filename = '%s_net.pth' % which_epoch
         load_path = join(self.save_dir, save_filename)
+        self.load_weights(load_path)
+
+    def load_weights(self, load_path):
         net = self.net
         if isinstance(net, torch.nn.DataParallel):
             net = net.module
         print('loading the model from %s' % load_path)
         # PyTorch newer than 0.4 (e.g., built from
         # GitHub source), you can remove str() on self.device
-        state_dict = torch.load(load_path, map_location=str(self.device))
-        if hasattr(state_dict, '_metadata'):
-            del state_dict._metadata
-        net.load_state_dict(state_dict)
+        saved_dict = torch.load(load_path, map_location=str(self.device))
+        if hasattr(saved_dict, '_metadata'):
+            del saved_dict._metadata
+
+        current_dict = net.state_dict()
+        filtered_dict = {k: v for k, v in saved_dict.items() if saved_dict[k].shape == current_dict[k].shape}
+        current_dict.update(filtered_dict)
+        net.load_state_dict(current_dict)
 
     def save_network(self, which_epoch):
         """save model to disk"""

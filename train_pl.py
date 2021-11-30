@@ -2,7 +2,6 @@ import argparse
 import os
 import random
 
-import matplotlib.pyplot as plt
 import torch
 import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader
@@ -14,6 +13,8 @@ from options.pl_options import PLOptions
 from data import DataLoader
 from models import create_model
 from models.losses import ce_jaccard
+import warnings
+warnings.filterwarnings("ignore")
 
 
 class MeshSegmenter(pl.LightningModule):
@@ -22,6 +23,9 @@ class MeshSegmenter(pl.LightningModule):
         super().__init__()
         self.opt = opt
         self.model = create_model(opt)
+        if opt.from_pretrained is not None:
+            print('Loaded pretrained weights:', opt.from_pretrained)
+            self.model.load_weights(opt.from_pretrained)
         self.criterion = ce_jaccard
         if self.training:
             self.train_metrics = torch.nn.ModuleList([
@@ -38,7 +42,7 @@ class MeshSegmenter(pl.LightningModule):
     def training_step(self, batch, idx):
         self.model.set_input(batch)
         out = self.model.forward()
-        loss = self.criterion(self.model.labels, out)
+        loss = self.criterion(self.model.labels, out, self.opt.class_weights)
 
         pred_class = out.data.max(1)[1]
         not_padding = self.model.labels != -1
@@ -48,14 +52,14 @@ class MeshSegmenter(pl.LightningModule):
         for m in self.train_metrics:
             val = m(pred_class, label_class)
             metric_name = str(m).split('(')[0]
-            self.log(metric_name.lower(), val, logger=True)
-        self.log('loss', loss)
+            self.log(metric_name.lower(), val, logger=True, prog_bar=True, on_epoch=True)
+        self.log('loss', loss, on_epoch=True)
         return loss
 
     def validation_step(self, batch, idx):
         self.model.set_input(batch)
         out = self.model.forward()
-        loss = self.criterion(self.model.labels, out)
+        loss = self.criterion(self.model.labels, out, self.opt.class_weights)
 
         pred_class = out.data.max(1)[1]
         not_padding = self.model.labels != -1
@@ -65,8 +69,8 @@ class MeshSegmenter(pl.LightningModule):
         for m in self.val_metrics:
             val = m(pred_class, label_class)
             metric_name = str(m).split('(')[0]
-            self.log('val_' + metric_name.lower(), val, logger=True)
-        self.log('val_loss', loss)
+            self.log('val_' + metric_name.lower(), val, logger=True, prog_bar=True, on_epoch=True)
+        self.log('val_loss', loss, on_epoch=True)
         return loss
 
     def forward(self, image):
@@ -94,17 +98,6 @@ class MeshSegmenter(pl.LightningModule):
                               weight_decay=0.0002)
         sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.opt.max_epochs * 2)
         return [opt], [sched]
-
-
-def argument_parser():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('--gpus', type=int, default=1)
-    parser.add_argument('--max_epochs', type=int, default=60)
-
-    parser.add_argument('--progress_bar_refresh_rate', type=int, default=20)
-    parser.add_argument('--default_root_dir', default='checkpoints/', help='pytorch-lightning log path')
-    return parser
 
 
 if __name__ == '__main__':
