@@ -26,6 +26,11 @@ class BaseOptions:
         self.parser.add_argument('--num_groups', type=int, default=16, help='# of groups for groupnorm')
         self.parser.add_argument('--init_type', type=str, default='normal', help='network initialization [normal|xavier|kaiming|orthogonal]')
         self.parser.add_argument('--init_gain', type=float, default=0.02, help='scaling factor for normal, xavier and orthogonal.')
+        self.parser.add_argument('--loss', type=str, default='ce_dice',
+                                 help='loss function; possible values: ce, dice, jaccard, ce_dice, ce_jaccard')
+        self.parser.add_argument('--loss_weights', nargs='+', default=[0.5, 2], type=float,
+                                 help='weights for loss function, used only with ce/ce_dice/ce_jaccard losses')
+
         # general params
         self.parser.add_argument('--num_threads', default=3, type=int, help='# threads for loading data')
         self.parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
