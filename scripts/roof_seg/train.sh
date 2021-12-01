@@ -9,9 +9,9 @@ python train_pl.py \
 --ncf 32 64 128 256 \
 --ninput_edges 14000 \
 --pool_res 12000 10500 9000 \
---resblocks 3 \
+--resblocks 2 \
 --batch_size 1 \
---lr 0.001 \
+--lr 0.01 \
 --num_aug 20 \
 --slide_verts 0.2
-#--from_pretrained checkpoints/human_seg/latest_net.pth
+#--from_pretrained checkpoints/coseg_aliens/latest_net.pth

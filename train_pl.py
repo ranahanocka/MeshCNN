@@ -12,6 +12,7 @@ import torchmetrics
 from options.pl_options import PLOptions
 from data import DataLoader
 from models import create_model
+from models.losses import postprocess
 from models.losses import ce_jaccard
 import warnings
 warnings.filterwarnings("ignore")
@@ -42,7 +43,8 @@ class MeshSegmenter(pl.LightningModule):
     def training_step(self, batch, idx):
         self.model.set_input(batch)
         out = self.model.forward()
-        loss = self.criterion(self.model.labels, out, self.opt.class_weights)
+        true, pred = postprocess(self.model.labels, out)
+        loss = self.criterion(true, pred, self.opt.class_weights)
 
         pred_class = out.data.max(1)[1]
         not_padding = self.model.labels != -1
@@ -59,7 +61,8 @@ class MeshSegmenter(pl.LightningModule):
     def validation_step(self, batch, idx):
         self.model.set_input(batch)
         out = self.model.forward()
-        loss = self.criterion(self.model.labels, out, self.opt.class_weights)
+        true, pred = postprocess(self.model.labels, out)
+        loss = self.criterion(true, pred, self.opt.class_weights)
 
         pred_class = out.data.max(1)[1]
         not_padding = self.model.labels != -1

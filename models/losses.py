@@ -38,6 +38,9 @@ def ce_loss(true, logits, weights, ignore=255):
     Returns:
         ce_loss: the weighted multi-class cross-entropy loss.
     """
+    true = true.squeeze(-1).squeeze(1)
+    logits = logits.squeeze(-1)
+
     ce_loss = F.cross_entropy(
         logits.float(),
         true.long(),
@@ -95,6 +98,7 @@ def jaccard_loss(true, logits, eps=1e-7):
     Returns:
         jacc_loss: the Jaccard loss.
     """
+
     num_classes = logits.shape[1]
     if num_classes == 1:
         true_1_hot = torch.eye(num_classes + 1)[true.squeeze(1)]
@@ -166,19 +170,24 @@ def ce_dice(true, pred, log=False, w1=1, w2=1):
 
 
 def ce_jaccard(true, pred, weights=torch.tensor([0.5, 2])):
+    if weights is not None:
+        weights = torch.tensor(weights).to(pred.device)
+
+    return ce_loss(true, pred, weights) + \
+           jaccard_loss(true, pred)
+
+
+def focal_loss(true, pred):
+    pass
+
+
+def postprocess(true, pred):
     num_classses = pred.shape[1]
     true = true.view(-1)
     pred = pred.view(num_classses, -1)
     not_padding = true != -1
     true = true[not_padding]
     pred = pred[:, not_padding]
-
-    if weights is not None:
-        weights = torch.tensor(weights).to(pred.device)
-
-    return ce_loss(true.unsqueeze(0), pred.unsqueeze(0), weights, ignore=-1) + \
-           jaccard_loss(true.view(1, 1, -1, 1), pred.view(1, num_classses, -1, 1))
-
-
-def focal_loss(true, pred):
-    pass
+    true = true.view(1, 1, -1, 1)
+    pred = pred.view(1, num_classses, -1, 1)
+    return true, pred
