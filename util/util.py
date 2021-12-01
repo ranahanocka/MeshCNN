@@ -69,12 +69,15 @@ def calculate_entropy(np_array):
 
 
 def remove_padding(label_class, pred_class):
+    num_classes = pred_class.size()[1]
+    label_class, pred_class = label_class.flatten(), pred_class.flatten()
+
     not_padding = label_class != -1
     label_class = label_class[not_padding]
-    label_class = label_class.unsqueeze(0)
+    label_class = label_class.view(1, -1)
 
-    not_padding = not_padding.repeat(2, 1)
-    not_padding = not_padding.unsqueeze(0)
+    not_padding = not_padding.repeat(num_classes)
     pred_class = pred_class[not_padding]
-    pred_class = pred_class.reshape([1, 2, int(pred_class.size()[0] / 2)])
+    pred_class = pred_class.view(1, num_classes, -1)
+
     return label_class, pred_class

@@ -28,12 +28,12 @@ def bce_loss(true, logits, pos_weight=None):
     return bce_loss
 
 
-def ce_loss(true, logits, weights, ignore=255):
+def ce_loss(logits, true, weights=None, ignore=255):
     """Computes the weighted multi-class cross-entropy loss.
 
     Args:
-        true: a tensor of shape [B, 1, H, W].
-        logits: a tensor of shape [B, C, H, W]. Corresponds to
+        true: a tensor of shape [1, N].
+        logits: a tensor of shape [1, C, N]. Corresponds to
             the raw output or logits of the model.
         weight: a tensor of shape [C,]. The weights attributed
             to each class.
@@ -42,6 +42,9 @@ def ce_loss(true, logits, weights, ignore=255):
     Returns:
         ce_loss: the weighted multi-class cross-entropy loss.
     """
+    true = true.squeeze()
+    logits = logits.squeeze().transpose(0,1)
+
     ce_loss = F.cross_entropy(
         logits.float(),
         true.long(),
@@ -51,7 +54,7 @@ def ce_loss(true, logits, weights, ignore=255):
     return ce_loss
 
 
-def dice_loss(true, logits, eps=1e-7):
+def dice_loss(logits, true, eps=1e-7):
     """Computes the Sørensen–Dice loss.
 
     Note that PyTorch optimizers minimize a loss. In this
@@ -59,14 +62,17 @@ def dice_loss(true, logits, eps=1e-7):
     return the negated dice loss.
 
     Args:
-        true: a tensor of shape [B, 1, H, W].
-        logits: a tensor of shape [B, C, H, W]. Corresponds to
+        true: a tensor of shape [1, N].
+        logits: a tensor of shape [1, C, N]. Corresponds to
             the raw output or logits of the model.
         eps: added to the denominator for numerical stability.
 
     Returns:
         dice_loss: the Sørensen–Dice loss.
     """
+    true = true.unsqueeze(1).unsqueeze(-1)
+    logits = logits.unsqueeze(-1)
+
     num_classes = logits.shape[1]
     if num_classes == 1:
         true_1_hot = torch.eye(num_classes + 1)[true.squeeze(1)]
@@ -89,7 +95,7 @@ def dice_loss(true, logits, eps=1e-7):
     return (1 - dice_loss)
 
 
-def jaccard_loss(true, logits, eps=1e-7):
+def jaccard_loss(logits, true, eps=1e-7):
     """Computes the Jaccard loss, a.k.a the IoU loss.
 
     Note that PyTorch optimizers minimize a loss. In this
@@ -97,14 +103,17 @@ def jaccard_loss(true, logits, eps=1e-7):
     return the negated jaccard loss.
 
     Args:
-        true: a tensor of shape [B, H, W] or [B, 1, H, W].
-        logits: a tensor of shape [B, C, H, W]. Corresponds to
+        true: a tensor of shape [1, N].
+        logits: a tensor of shape [1, C, N]. Corresponds to
             the raw output or logits of the model.
         eps: added to the denominator for numerical stability.
 
     Returns:
         jacc_loss: the Jaccard loss.
     """
+    true = true.unsqueeze(1).unsqueeze(-1)
+    logits = logits.unsqueeze(-1)
+
     num_classes = logits.shape[1]
     if num_classes == 1:
         true_1_hot = torch.eye(num_classes + 1)[true.squeeze(1)]
@@ -175,12 +184,12 @@ def tversky_loss(true, logits, alpha, beta, eps=1e-7):
     return (1 - tversky_loss)
 
 
-def ce_dice(true, pred, log=False, w1=1, w2=1):
-    pass
+def ce_dice(logits, true, weights=None):
+    return ce_loss(logits, true, weights) + dice_loss(logits, true)
 
 
-def ce_jaccard(true, pred, log=False, w1=1, w2=1):
-    pass
+def ce_jaccard(logits, true, weights=None):
+    return ce_loss(logits, true, weights) + jaccard_loss(logits, true)
 
 
 def focal_loss(true, pred):
