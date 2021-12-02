@@ -1,0 +1,5 @@
+outs:
+- md5: 16793820fa6e8cdb59dce3e175dd3a7d.dir
+  size: 184013105
+  nfiles: 234
+  path: roof_seg
