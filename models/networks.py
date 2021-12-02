@@ -115,8 +115,6 @@ def define_loss(opt):
     if opt.dataset_mode == 'classification':
         loss = torch.nn.CrossEntropyLoss()
     elif opt.dataset_mode == 'segmentation':
-        # loss = torch.nn.CrossEntropyLoss(ignore_index=-1, weight=torch.tensor([0.5, 2]))
-
         device = torch.device('cuda:{}'.format(opt.gpu_ids[0])) if opt.gpu_ids else torch.device('cpu')
         weights = torch.FloatTensor(opt.loss_weights).to(device)
 

@@ -165,8 +165,12 @@ def tversky_loss(true, logits, alpha, beta, eps=1e-7):
     return (1 - tversky_loss)
 
 
-def ce_dice(true, pred, log=False, w1=1, w2=1):
-    pass
+def ce_dice(true, pred, weights=torch.tensor([0.5, 2])):
+    if weights is not None:
+        weights = torch.tensor(weights).to(pred.device)
+
+    return ce_loss(true, pred, weights) + \
+           dice_loss(true, pred)
 
 
 def ce_jaccard(true, pred, weights=torch.tensor([0.5, 2])):
