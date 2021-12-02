@@ -27,7 +27,7 @@ class MeshSegmenter(pl.LightningModule):
         if opt.from_pretrained is not None:
             print('Loaded pretrained weights:', opt.from_pretrained)
             self.model.load_weights(opt.from_pretrained)
-        self.criterion = ce_jaccard
+        self.criterion = self.model.criterion
         if self.training:
             self.train_metrics = torch.nn.ModuleList([
                 torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro'),
@@ -40,46 +40,34 @@ class MeshSegmenter(pl.LightningModule):
                 torchmetrics.F1(num_classes=opt.nclasses, average='macro')
             ])
 
-    def training_step(self, batch, idx):
+    def step(self, batch, is_train=True):
         self.model.set_input(batch)
         out = self.model.forward()
         true, pred = postprocess(self.model.labels, out)
-        loss = self.criterion(true, pred, self.opt.class_weights)
+        loss = self.criterion(true, pred)
 
-        pred_class = out.data.max(1)[1]
-        not_padding = self.model.labels != -1
-        label_class = self.model.labels[not_padding]
-        pred_class = pred_class[not_padding]
+        true = true.view(-1)
+        pred = pred.argmax(1).view(-1)
 
+        prefix = '' if is_train else 'val_'
         for m in self.train_metrics:
-            val = m(pred_class, label_class)
+            val = m(pred, true)
             metric_name = str(m).split('(')[0]
-            self.log(metric_name.lower(), val, logger=True, prog_bar=True, on_epoch=True)
-        self.log('loss', loss, on_epoch=True)
+            self.log(prefix + metric_name.lower(), val, logger=True, prog_bar=True, on_epoch=True)
+        self.log(prefix + 'loss', loss, on_epoch=True)
         return loss
+
+    def training_step(self, batch, idx):
+
+        return self.step(batch, is_train=True)
 
     def validation_step(self, batch, idx):
-        self.model.set_input(batch)
-        out = self.model.forward()
-        true, pred = postprocess(self.model.labels, out)
-        loss = self.criterion(true, pred, self.opt.class_weights)
-
-        pred_class = out.data.max(1)[1]
-        not_padding = self.model.labels != -1
-        label_class = self.model.labels[not_padding]
-        pred_class = pred_class[not_padding]
-
-        for m in self.val_metrics:
-            val = m(pred_class, label_class)
-            metric_name = str(m).split('(')[0]
-            self.log('val_' + metric_name.lower(), val, logger=True, prog_bar=True, on_epoch=True)
-        self.log('val_loss', loss, on_epoch=True)
-        return loss
+        return self.step(batch, is_train=False)
 
     def forward(self, image):
         return self.model(image)
 
-    def on_train_epoch_end(self, unused = None):
+    def on_train_epoch_end(self, unused=None):
         for m in self.train_metrics:
             m.reset()
 

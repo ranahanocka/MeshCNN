@@ -34,8 +34,12 @@ class ClassifierModel:
         self.net = networks.define_classifier(opt.input_nc, opt.ncf, opt.ninput_edges, opt.nclasses, opt,
                                               self.gpu_ids, opt.arch, opt.init_type, opt.init_gain)
         self.net.train(self.is_train)
-        from .losses import ce_jaccard
-        self.criterion = ce_jaccard#networks.define_loss(opt).to(self.device)
+        self.criterion = networks.define_loss(opt)
+
+        if self.is_train:
+            self.optimizer = torch.optim.Adam(self.net.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
+            self.scheduler = networks.get_scheduler(self.optimizer, opt)
+            print_network(self.net)
 
         if not self.is_train or opt.continue_train:
             self.load_network(opt.which_epoch)
