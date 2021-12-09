@@ -2,7 +2,7 @@
 
 ## run the training
 python tuning.py \
---dataroot datasets/roof_seg \
+--dataroot /home/ihahanov/Projects/roof-measurements/dl_roof_extraction/meshcnn/datasets/roof_seg \
 --name roof_seg \
 --arch meshunet \
 --dataset_mode segmentation \
