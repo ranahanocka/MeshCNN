@@ -18,9 +18,6 @@ def train_segmentation(config):
     trainer.fit(model)
 
 
-
-
-
 if __name__== '__main__':
     # Execute the hyperparameter search
 
@@ -33,5 +30,5 @@ if __name__== '__main__':
     #     config=config, num_samples=1, resources_per_trial={"cpu": 1}, mode='max')
 
     analysis = tune.run(
-        tune.with_parameters(train_segmentation, epochs=1, gpus=1),
-        config=config, num_samples=1, resources_per_trial={"gpu": 1, 'cpu': 4})
+        tune.with_parameters(train_segmentation),
+        config=config, num_samples=1, resources_per_trial={"gpu": 1, 'cpu': 1})
