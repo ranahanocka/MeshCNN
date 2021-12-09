@@ -40,7 +40,7 @@ class MeshSegmenter(pl.LightningModule):
                 torchmetrics.F1(num_classes=opt.nclasses, average='macro')
             ])
 
-    def step(self, batch, is_train=True):
+    def step(self, batch, metrics, metric_prefix=''):
         self.model.set_input(batch)
         out = self.model.forward()
         true, pred = postprocess(self.model.labels, out)
@@ -49,8 +49,8 @@ class MeshSegmenter(pl.LightningModule):
         true = true.view(-1)
         pred = pred.argmax(1).view(-1)
 
-        prefix = '' if is_train else 'val_'
-        for m in self.train_metrics:
+        prefix = metric_prefix
+        for m in metrics:
             val = m(pred, true)
             metric_name = str(m).split('(')[0]
             self.log(prefix + metric_name.lower(), val, logger=True, prog_bar=True, on_epoch=True)
@@ -59,10 +59,10 @@ class MeshSegmenter(pl.LightningModule):
 
     def training_step(self, batch, idx):
 
-        return self.step(batch, is_train=True)
+        return self.step(batch, self.train_metrics)
 
     def validation_step(self, batch, idx):
-        return self.step(batch, is_train=False)
+        return self.step(batch, self.val_metrics, metric_prefix='val')
 
     def forward(self, image):
         return self.model(image)
