@@ -62,7 +62,7 @@ class MeshSegmenter(pl.LightningModule):
         return self.step(batch, self.train_metrics)
 
     def validation_step(self, batch, idx):
-        return self.step(batch, self.val_metrics, metric_prefix='val')
+        return self.step(batch, self.val_metrics, metric_prefix='val_')
 
     def forward(self, image):
         return self.model(image)
