@@ -100,5 +100,5 @@ if __name__ == '__main__':
                                             callbacks=[ModelCheckpoint(monitor='val_iou',
                                                                        mode='max',
                                                                        save_top_k=3,
-                                                                       filename='{epoch:02d}-{val_acc_epoch:.2f}',)])
+                                                                       filename='{epoch:02d}-{val_iou:.2f}',)])
     trainer.fit(model)
