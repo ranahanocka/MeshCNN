@@ -78,6 +78,8 @@ class MeshSegmenter(pl.LightningModule, ClassifierModel):
 
     def forward(self, data):
         input_edge_features = torch.from_numpy(data['edge_features']).float()
+        if 'label' in data:
+            self.labels = torch.from_numpy(data['label']).long().to(self.device)
         self.edge_features = input_edge_features.to(self.device).requires_grad_(self.training)
         self.mesh = data['mesh']
         return self.net(self.edge_features, self.mesh)
