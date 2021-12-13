@@ -24,7 +24,20 @@ class MeshSegmenter(pl.LightningModule, ClassifierModel):
 
     def __init__(self, opt):
         pl.LightningModule.__init__(self)
-        ClassifierModel.__init__(self, opt)
+        self.opt = opt
+        self.gpu_ids = opt.gpu_ids
+        self.optimizer = None
+        self.edge_features = None
+        self.labels = None
+        self.mesh = None
+        self.soft_label = None
+        self.loss = None
+        self.nclasses = opt.nclasses
+
+        # load/define networks
+        self.net = networks.define_classifier(opt.input_nc, opt.ncf, opt.ninput_edges, opt.nclasses, opt,
+                                              self.gpu_ids, opt.arch, opt.init_type, opt.init_gain)
+        self.criterion = networks.define_loss(opt)
         if opt.from_pretrained is not None:
             print('Loaded pretrained weights:', opt.from_pretrained)
             self.load_weights(opt.from_pretrained)
@@ -42,7 +55,7 @@ class MeshSegmenter(pl.LightningModule, ClassifierModel):
 
     def step(self, batch, metrics, metric_prefix=''):
         out = self.forward(batch)
-        true, pred = postprocess(self.model.labels, out)
+        true, pred = postprocess(self.labels, out)
         loss = self.criterion(true, pred)
 
         true = true.view(-1)
@@ -63,9 +76,11 @@ class MeshSegmenter(pl.LightningModule, ClassifierModel):
     def validation_step(self, batch, idx):
         return self.step(batch, self.val_metrics, metric_prefix='val_')
 
-    def forward(self, batch):
-        self.set_input(batch)
-        return ClassifierModel.forward(self)
+    def forward(self, data):
+        input_edge_features = torch.from_numpy(data['edge_features']).float()
+        self.edge_features = input_edge_features.to(self.device).requires_grad_(self.training)
+        self.mesh = data['mesh']
+        return self.net(self.edge_features, self.mesh)
 
     def on_train_epoch_end(self, unused=None):
         for m in self.train_metrics:
@@ -84,7 +99,7 @@ class MeshSegmenter(pl.LightningModule, ClassifierModel):
         return DataLoader(self.opt)
 
     def configure_optimizers(self):
-        opt = torch.optim.SGD(self.model.net.parameters(), lr=self.opt.lr,
+        opt = torch.optim.SGD(self.net.parameters(), lr=self.opt.lr,
                               momentum=0.9,
                               weight_decay=0.0002)
         sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.opt.max_epochs * 2)
