@@ -24,6 +24,7 @@ class MeshSegmenter(pl.LightningModule):
         super().__init__()
         self.opt = opt
         self.model = create_model(opt)
+        self.net = self.model.net
         if opt.from_pretrained is not None:
             print('Loaded pretrained weights:', opt.from_pretrained)
             self.model.load_weights(opt.from_pretrained)
@@ -87,7 +88,7 @@ class MeshSegmenter(pl.LightningModule):
         opt = torch.optim.SGD(self.model.net.parameters(), lr=self.opt.lr,
                               momentum=0.9,
                               weight_decay=0.0002)
-        # opt = torch.optim.Adam(self.model.net.parameters(), lr=self.opt.lr, weight_decay=0.0002)
+        # opt = torch.optim.Adam(self.model.net.parameters(), lr.)
         sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.opt.max_epochs * 2)
         return [opt], [sched]
 
@@ -100,5 +101,5 @@ if __name__ == '__main__':
                                             callbacks=[ModelCheckpoint(monitor='val_iou',
                                                                        mode='max',
                                                                        save_top_k=3,
-                                                                       filename='{epoch:02d}-{val_iou:.2f}',)])
+                                                                       filename='{epoch:02d}-{val_acc_epoch:.2f}',)])
     trainer.fit(model)
