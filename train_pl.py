@@ -15,20 +15,19 @@ from models import create_model
 from models.losses import postprocess
 from models.losses import ce_jaccard
 import warnings
+from models import networks
+from models.mesh_classifier import ClassifierModel
 warnings.filterwarnings("ignore")
 
 
-class MeshSegmenter(pl.LightningModule):
+class MeshSegmenter(pl.LightningModule, ClassifierModel):
 
     def __init__(self, opt):
-        super().__init__()
-        self.opt = opt
-        self.model = create_model(opt)
-        self.net = self.model.net
+        ClassifierModel.__init__(self, opt)
+        pl.LightningModule.__init__(self)
         if opt.from_pretrained is not None:
             print('Loaded pretrained weights:', opt.from_pretrained)
-            self.model.load_weights(opt.from_pretrained)
-        self.criterion = self.model.criterion
+            self.load_weights(opt.from_pretrained)
         if self.training:
             self.train_metrics = torch.nn.ModuleList([
                 torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro'),
@@ -42,8 +41,7 @@ class MeshSegmenter(pl.LightningModule):
             ])
 
     def step(self, batch, metrics, metric_prefix=''):
-        self.model.set_input(batch)
-        out = self.model.forward()
+        out = self.forward(batch)
         true, pred = postprocess(self.model.labels, out)
         loss = self.criterion(true, pred)
 
@@ -65,8 +63,9 @@ class MeshSegmenter(pl.LightningModule):
     def validation_step(self, batch, idx):
         return self.step(batch, self.val_metrics, metric_prefix='val_')
 
-    def forward(self, image):
-        return self.model(image)
+    def forward(self, batch):
+        self.set_input(batch)
+        return ClassifierModel.forward(self)
 
     def on_train_epoch_end(self, unused=None):
         for m in self.train_metrics:
@@ -88,7 +87,6 @@ class MeshSegmenter(pl.LightningModule):
         opt = torch.optim.SGD(self.model.net.parameters(), lr=self.opt.lr,
                               momentum=0.9,
                               weight_decay=0.0002)
-        # opt = torch.optim.Adam(self.model.net.parameters(), lr.)
         sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.opt.max_epochs * 2)
         return [opt], [sched]
 
@@ -101,5 +99,5 @@ if __name__ == '__main__':
                                             callbacks=[ModelCheckpoint(monitor='val_iou',
                                                                        mode='max',
                                                                        save_top_k=3,
-                                                                       filename='{epoch:02d}-{val_acc_epoch:.2f}',)])
+                                                                       filename='{epoch:02d}-{val_iou:.2f}',)])
     trainer.fit(model)
