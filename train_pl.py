@@ -23,8 +23,8 @@ warnings.filterwarnings("ignore")
 class MeshSegmenter(pl.LightningModule, ClassifierModel):
 
     def __init__(self, opt):
-        ClassifierModel.__init__(self, opt)
         pl.LightningModule.__init__(self)
+        ClassifierModel.__init__(self, opt)
         if opt.from_pretrained is not None:
             print('Loaded pretrained weights:', opt.from_pretrained)
             self.load_weights(opt.from_pretrained)
