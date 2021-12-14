@@ -104,7 +104,8 @@ class MeshSegmenter(pl.LightningModule, ClassifierModel):
         opt = torch.optim.SGD(self.net.parameters(), lr=self.opt.lr,
                               momentum=0.9,
                               weight_decay=0.0002)
-        sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.opt.max_epochs * 2)
+        sched = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(opt, self.opt.warmup_epochs)
+        # sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.opt.max_epochs * 2)
         return [opt], [sched]
 
 

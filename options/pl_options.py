@@ -5,6 +5,7 @@ class PLOptions(TrainOptions):
         TrainOptions.initialize(self)
         self.parser.add_argument('--gpus', type=int, default=1)
         self.parser.add_argument('--max_epochs', type=int, default=200)
+        self.parser.add_argument('--warmup_epochs', type=int, default=50)
         self.parser.add_argument('--nclasses', type=int, default=2)
         self.parser.add_argument('--input_nc', type=int, default=5)
         self.parser.add_argument('--class_weights', nargs='+', default=[0.5, 2], type=float)
