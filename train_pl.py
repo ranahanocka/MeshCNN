@@ -30,12 +30,12 @@ class MeshSegmenter(pl.LightningModule):
         self.criterion = self.model.criterion
         if self.training:
             self.train_metrics = torch.nn.ModuleList([
-                torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro'),
+                torchmetrics.Accuracy(),# (num_classes=opt.nclasses, average='macro'),
                 torchmetrics.IoU(num_classes=opt.nclasses),
                 torchmetrics.F1(num_classes=opt.nclasses, average='macro')
             ])
             self.val_metrics = torch.nn.ModuleList([
-                torchmetrics.Accuracy(num_classes=opt.nclasses, average='macro'),
+                torchmetrics.Accuracy(), #num_classes=opt.nclasses, average='macro'),
                 torchmetrics.IoU(num_classes=opt.nclasses),
                 torchmetrics.F1(num_classes=opt.nclasses, average='macro')
             ])
