@@ -13,5 +13,6 @@ python tuning.py \
 --batch_size 1 \
 --lr 0.01 \
 --num_aug 20 \
---slide_verts 0.2
+--slide_verts 0.2 \
+--warmup_epochs 300
 #--from_pretrained checkpoints/coseg_aliens/latest_net.pth
