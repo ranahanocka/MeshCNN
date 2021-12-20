@@ -1,5 +1,6 @@
 import json
 
+import torch.cuda
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import Trainer
 from train_pl import *
@@ -33,6 +34,7 @@ def train_segmentation(config):
 
     trainer = Trainer.from_argparse_args(args, callbacks=[callback_tune, callback_lightning])
     trainer.fit(model)
+    torch.cuda.empty_cache()
 
 
 if __name__== '__main__':
