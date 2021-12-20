@@ -15,5 +15,5 @@ python tuning.py \
 --num_aug 20 \
 --slide_verts 0.2 \
 --warmup_epochs 70 \
---max_epochs 50
+--max_epochs 100
 #--from_pretrained checkpoints/coseg_aliens/latest_net.pth
