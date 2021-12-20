@@ -101,10 +101,14 @@ class MeshSegmenter(pl.LightningModule, ClassifierModel):
         return DataLoader(self.opt)
 
     def configure_optimizers(self):
-        opt = torch.optim.Adam(self.net.parameters(), lr=self.opt.lr, weight_decay=0.0002)
-        # opt = torch.optim.SGD(self.net.parameters(), lr=self.opt.lr,
-        #                       momentum=0.9,
-        #                       weight_decay=0.0002)
+        if self.opt.optimizer == 'adam':
+            opt = torch.optim.Adam(self.net.parameters(), lr=self.opt.lr, weight_decay=self.opt.weight_decay)
+        elif self.opt.optimizer == 'sgd':
+            opt = torch.optim.SGD(self.net.parameters(), lr=self.opt.lr,
+                                  momentum=0.9,
+                                  weight_decay=self.opt.weight_decay)
+        elif self.opt.optimizer == 'adamw':
+            opt = torch.optim.AdamW(self.net.parameters(), lr=self.opt.lf, weight_decay=self.opt.weight_decay)
         sched = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(opt, self.opt.warmup_epochs)
         # sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.opt.max_epochs * 2)
         return [opt], [sched]

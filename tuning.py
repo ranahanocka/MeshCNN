@@ -8,20 +8,11 @@ from ray import tune
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
 
 
-args = PLOptions().parse()
 
 def train_segmentation(config):
-    # args = PLOptions().parse()
-    if config.get('num_aug'):
-        args.num_aug = config.get('num_aug')
-    if config.get('resblocks'):
-        args.resblocks = config.get('resblocks')
-    if config.get('ncf'):
-        args.ncf = config.get('ncf')
-    if config.get('slide_verts'):
-        args.slide_verts = config.get('slide_verts')
-    if config.get('lr'):
-        args.lr = config.get('lr')
+    args = PLOptions().parse()
+    for k, v in config.items():
+        args.__dict__[k] = v
     
     model = MeshSegmenter(args)
     callback_tune = TuneReportCallback(metrics='val_iou', on="validation_end")
@@ -41,11 +32,13 @@ if __name__== '__main__':
     # Execute the hyperparameter search
 
     config = {
-        # 'num_aug': tune.grid_search([10, 20, 30]),
-        # 'resblocks': tune.grid_search([2, 3, 4, 5]),
-        'ncf': tune.grid_search([[64, 128, 256, 512], [32, 64, 128, 256]]),
-        # 'slide_verts': tune.grid_search([0.08, 0.1, 0.12, 0.16, 0.2]),
-        # 'lr': tune.grid_search([0.00005, 0.0002, 0.0005]) 
+        'resblocks': tune.grid_search([2, 3, 4]),
+        'ncf': tune.grid_search([[64, 128, 256, 512], [32, 64, 128, 256], [16, 32, 64, 128]]),
+        'slide_verts': tune.grid_search([0.1, 0.2]),
+        'lr': tune.grid_search([0.01, 0.001]),
+        'optimizer': tune.grid_search(['adam', 'sgd', 'adamw']),
+        'warmup_epochs': tune.grid_search([200, 100, 50]),
+        'weight_decay': tune.grid_search([0, 0.0002]),
     }
 
     ## CPU only
