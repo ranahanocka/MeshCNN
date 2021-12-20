@@ -7,10 +7,9 @@ from train_pl import *
 from ray import tune
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
 
-
+args = PLOptions().parse()
 
 def train_segmentation(config):
-    args = PLOptions().parse()
     for k, v in config.items():
         args.__dict__[k] = v
     
@@ -30,7 +29,6 @@ def train_segmentation(config):
 
 if __name__== '__main__':
     # Execute the hyperparameter search
-
     config = {
         'resblocks': tune.grid_search([2, 3, 4]),
         'ncf': tune.grid_search([[64, 128, 256, 512], [32, 64, 128, 256], [16, 32, 64, 128]]),
