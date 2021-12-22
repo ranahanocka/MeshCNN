@@ -16,7 +16,7 @@ def train_segmentation(config):
     model = MeshSegmenter(args)
     callback_tune = TuneReportCallback(metrics='val_iou', on="validation_end")
     callback_lightning = ModelCheckpoint(monitor='val_iou', mode='max', save_top_k=3,
-                                         filename='{epoch:02d}-{val_acc_epoch:.2f}', )
+                                         filename='{epoch:02d}-{val_iou:.2f}', )
 
     # callback_tune_f1 = TuneReportCallback(metrics='val_f1', on="validation_end")
     # callback_lightning_f1 = ModelCheckpoint(monitor='val_f1', mode='max', save_top_k=3,
