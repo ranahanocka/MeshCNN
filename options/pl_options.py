@@ -16,3 +16,9 @@ class PLOptions(TrainOptions):
         self.parser.add_argument('--progress_bar_refresh_rate', type=int, default=20)
         self.parser.add_argument('--default_root_dir', default='checkpoints/',
                             help='pytorch-lightning log path')
+        # options used for decimation script only
+        self.parser.add_argument('--model_path', default='checkpoints/lightning_logs/version_0/checkpoints/epoch=95-val_acc_epoch=0.00.ckpt',
+                                 help='.ckpt file with trained model')
+        self.parser.add_argument('--decimation_dir',
+                                 default='datasets/roof_seg/obj_new',
+                                 help='augmented meshes are saved here')
