@@ -85,7 +85,7 @@ def run_decimation(epoch=-1):
 
         torch.cuda.empty_cache()
 
-        for desired_triangle_area in [0.3, 8]:#[0.5, 0.8, 1, 1.2, 1.4, 1.7, 2, 2.5, 3.5, 5, 7]:
+        for desired_triangle_area in [0.5, 0.8, 1, 1.2, 1.4, 1.7, 2, 2.5, 3.5, 5, 7]:
             print(desired_triangle_area)
 
             tm_mesh_new = simplify_rooftop(tm_mesh, int((tm_mesh.area / desired_triangle_area)))
