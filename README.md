@@ -76,8 +76,8 @@ The same scripts also exist for COSEG segmentation in ```scripts/coseg_seg``` an
 Check out the [MeshCNN wiki](https://github.com/ranahanocka/MeshCNN/wiki) for more details. Specifically, see info on [segmentation](https://github.com/ranahanocka/MeshCNN/wiki/Segmentation) and [data processing](https://github.com/ranahanocka/MeshCNN/wiki/Data-Processing).
 
 # Other implementations
-[Point2Mesh tensorflow reimplementation](https://github.com/dcharatan/point2mesh-reimplementation), which also contains MeshCNN
-[MedMeshCNN](https://github.com/Divya9Sasidharan/MedMeshCNN), handles meshes with 170k edges
+- [Point2Mesh tensorflow reimplementation](https://github.com/dcharatan/point2mesh-reimplementation), which also contains MeshCNN
+- [MedMeshCNN](https://github.com/Divya9Sasidharan/MedMeshCNN), handles meshes with 170k edges
 
 # Citation
 If you find this code useful, please consider citing our paper
