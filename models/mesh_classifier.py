@@ -1,4 +1,6 @@
 import torch
+import torchmetrics
+
 from . import networks
 from os.path import join
 from util.util import seg_accuracy, print_network
@@ -32,7 +34,7 @@ class ClassifierModel:
         self.net = networks.define_classifier(opt.input_nc, opt.ncf, opt.ninput_edges, opt.nclasses, opt,
                                               self.gpu_ids, opt.arch, opt.init_type, opt.init_gain)
         self.net.train(self.is_train)
-        self.criterion = networks.define_loss(opt).to(self.device)
+        self.criterion = networks.define_loss(opt)
 
         if self.is_train:
             self.optimizer = torch.optim.Adam(self.net.parameters(), lr=opt.lr, betas=(opt.beta1, 0.999))
@@ -58,7 +60,7 @@ class ClassifierModel:
         return out
 
     def backward(self, out):
-        self.loss = self.criterion(out, self.labels)
+        self.loss = self.criterion(self.labels, out)
         self.loss.backward()
 
     def optimize_parameters(self):
@@ -74,17 +76,23 @@ class ClassifierModel:
         """load model from disk"""
         save_filename = '%s_net.pth' % which_epoch
         load_path = join(self.save_dir, save_filename)
+        self.load_weights(load_path)
+
+    def load_weights(self, load_path):
         net = self.net
         if isinstance(net, torch.nn.DataParallel):
             net = net.module
         print('loading the model from %s' % load_path)
         # PyTorch newer than 0.4 (e.g., built from
         # GitHub source), you can remove str() on self.device
-        state_dict = torch.load(load_path, map_location=str(self.device))
-        if hasattr(state_dict, '_metadata'):
-            del state_dict._metadata
-        net.load_state_dict(state_dict)
+        saved_dict = torch.load(load_path, map_location=str(self.device))
+        if hasattr(saved_dict, '_metadata'):
+            del saved_dict._metadata
 
+        current_dict = net.state_dict()
+        filtered_dict = {k: v for k, v in saved_dict.items() if saved_dict[k].shape == current_dict[k].shape}
+        current_dict.update(filtered_dict)
+        net.load_state_dict(current_dict)
 
     def save_network(self, which_epoch):
         """save model to disk"""
@@ -114,6 +122,20 @@ class ClassifierModel:
             self.export_segmentation(pred_class.cpu())
             correct = self.get_accuracy(pred_class, label_class)
         return correct, len(label_class)
+
+    def get_metrics(self, acc_metric, f1_metric, iou_metric):
+        with torch.no_grad():
+            out = self.forward()
+            pred_class = out.data.max(1)[1]
+            label_class = self.labels
+            label_class[label_class == -1] = 0
+            pred_class = pred_class.to(self.device)
+            label_class = label_class.to(self.device)
+
+            acc = acc_metric(pred_class, label_class)
+            f1 = f1_metric(pred_class, label_class)
+            iou = iou_metric(pred_class, label_class)
+        return acc, f1, iou
 
     def get_accuracy(self, pred, labels):
         """computes accuracy for classification / segmentation """

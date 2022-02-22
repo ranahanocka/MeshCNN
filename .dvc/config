@@ -1,0 +1,4 @@
+[core]
+    remote = storage
+['remote "storage"']
+    url = s3://machinelearning-assets/roofmeasurements/datasets/roof_segmentation

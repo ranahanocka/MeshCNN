@@ -5,5 +5,5 @@
 # data files
 *.obj
 checkpoints
-datasets
+#datasets
 runs

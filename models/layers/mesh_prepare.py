@@ -11,11 +11,12 @@ def fill_mesh(mesh2fill, file: str, opt):
         mesh_data = from_scratch(file, opt)
         np.savez_compressed(load_path, gemm_edges=mesh_data.gemm_edges, vs=mesh_data.vs, edges=mesh_data.edges,
                             edges_count=mesh_data.edges_count, ve=mesh_data.ve, v_mask=mesh_data.v_mask,
-                            filename=mesh_data.filename, sides=mesh_data.sides,
+                            filename=mesh_data.filename, sides=mesh_data.sides, faces=mesh_data.faces,
                             edge_lengths=mesh_data.edge_lengths, edge_areas=mesh_data.edge_areas,
                             features=mesh_data.features)
     mesh2fill.vs = mesh_data['vs']
     mesh2fill.edges = mesh_data['edges']
+    mesh2fill.faces = mesh_data['faces']
     mesh2fill.gemm_edges = mesh_data['gemm_edges']
     mesh2fill.edges_count = int(mesh_data['edges_count'])
     mesh2fill.ve = mesh_data['ve']
@@ -51,9 +52,9 @@ def from_scratch(file, opt):
     mesh_data.filename = 'unknown'
     mesh_data.edge_lengths = None
     mesh_data.edge_areas = []
-    mesh_data.vs, faces = fill_from_file(mesh_data, file)
+    mesh_data.vs, mesh_data.faces = fill_from_file(mesh_data, file)
     mesh_data.v_mask = np.ones(len(mesh_data.vs), dtype=bool)
-    faces, face_areas = remove_non_manifolds(mesh_data, faces)
+    faces, face_areas = remove_non_manifolds(mesh_data, mesh_data.faces)
     if opt.num_aug > 1:
         faces = augmentation(mesh_data, opt, faces)
     build_gemm(mesh_data, faces, face_areas)
@@ -155,7 +156,7 @@ def build_gemm(mesh, faces, face_areas):
             sides[edge_key][nb_count[edge_key] - 2] = nb_count[edge2key[faces_edges[(idx + 1) % 3]]] - 1
             sides[edge_key][nb_count[edge_key] - 1] = nb_count[edge2key[faces_edges[(idx + 2) % 3]]] - 2
     mesh.edges = np.array(edges, dtype=np.int32)
-    mesh.gemm_edges = np.array(edge_nb, dtype=np.int64)
+    mesh.gemm_edges = np.array(edge_nb, dtype=np.int64)  # [n_edges, 4] - matrix of edges and 4 their neighbors
     mesh.sides = np.array(sides, dtype=np.int64)
     mesh.edges_count = edges_count
     mesh.edge_areas = np.array(mesh.edge_areas, dtype=np.float32) / np.sum(face_areas) #todo whats the difference between edge_areas and edge_lenghts?
@@ -195,10 +196,12 @@ def slide_verts(mesh, prct):
     for vi in vids:
         if shifted < target:
             edges = mesh.ve[vi]
-            if min(dihedral[edges]) > 2.65:
-                edge = mesh.edges[np.random.choice(edges)]
-                vi_t = edge[1] if vi == edge[0] else edge[0]
-                nv = mesh.vs[vi] + np.random.uniform(0.2, 0.5) * (mesh.vs[vi_t] - mesh.vs[vi])
+            if len(dihedral[edges]) == 0:
+                continue
+            if min(dihedral[edges]) > 2.65:  # if any 2 adjacent faces for the vi vertex are flat enough
+                edge = mesh.edges[np.random.choice(edges)]  # take one random edge
+                vi_t = edge[1] if vi == edge[0] else edge[0]  # take the opposite vertex
+                nv = mesh.vs[vi] + np.random.uniform(0.2, 0.5) * (mesh.vs[vi_t] - mesh.vs[vi])  # shift origin vi vertex
                 mesh.vs[vi] = nv
                 shifted += 1
         else:
@@ -366,18 +369,26 @@ def get_edge_points(mesh):
 
 
 def get_side_points(mesh, edge_id):
+    """
+    Return 4 points indices for each edge. 2 point indices constituting the edge itself, and 2 point indices on the
+    opposite sides of both triangles sharing the given edge.
+    [edge_a[0], edge_a[1], opposite_vertex_A, opposite_vertex_B]
+
+    In case the edge lies on the boundary, the third and fourth edge are similar and correspond to the same vertex.
+    [edge_a[0], edge_a[1], opposite_vertex_A, opposite_vertex_A]
+    """
     # if mesh.gemm_edges[edge_id, side] == -1:
     #     return mesh.get_side_points(edge_id, ((side + 2) % 4))
     # else:
     edge_a = mesh.edges[edge_id]
 
-    if mesh.gemm_edges[edge_id, 0] == -1:
+    if mesh.gemm_edges[edge_id, 0] == -1:  # If edge lies on the boundary with LEFT face missing
         edge_b = mesh.edges[mesh.gemm_edges[edge_id, 2]]
         edge_c = mesh.edges[mesh.gemm_edges[edge_id, 3]]
     else:
         edge_b = mesh.edges[mesh.gemm_edges[edge_id, 0]]
         edge_c = mesh.edges[mesh.gemm_edges[edge_id, 1]]
-    if mesh.gemm_edges[edge_id, 2] == -1:
+    if mesh.gemm_edges[edge_id, 2] == -1:  # If edge lies on the boundary with RIGHT face missing
         edge_d = mesh.edges[mesh.gemm_edges[edge_id, 0]]
         edge_e = mesh.edges[mesh.gemm_edges[edge_id, 1]]
     else:

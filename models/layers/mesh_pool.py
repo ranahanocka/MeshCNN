@@ -56,6 +56,7 @@ class MeshPool(nn.Module):
         self.__updated_fe[mesh_index] = fe
 
     def __pool_edge(self, mesh, edge_id, mask, edge_groups):
+        # if the edge is a boundary edge or any of its neighbor edges are boundary
         if self.has_boundaries(mesh, edge_id):
             return False
         elif self.__clean_side(mesh, edge_id, mask, edge_groups, 0)\
@@ -74,7 +75,7 @@ class MeshPool(nn.Module):
     def __clean_side(self, mesh, edge_id, mask, edge_groups, side):
         if mesh.edges_count <= self.__out_target:
             return False
-        invalid_edges = MeshPool.__get_invalids(mesh, edge_id, edge_groups, side)
+        invalid_edges = MeshPool.__get_invalids(mesh, edge_id, edge_groups, side)  # triplet edges sharing the same vertex
         while len(invalid_edges) != 0 and mesh.edges_count > self.__out_target:
             self.__remove_triplete(mesh, mask, edge_groups, invalid_edges)
             if mesh.edges_count <= self.__out_target:
@@ -116,6 +117,12 @@ class MeshPool(nn.Module):
     def __get_invalids(mesh, edge_id, edge_groups, side):
         info = MeshPool.__get_face_info(mesh, edge_id, side)
         key_a, key_b, side_a, side_b, other_side_a, other_side_b, other_keys_a, other_keys_b = info
+
+        #  if we have a separate triangle not connected to anything
+        if len(set(other_keys_a).intersection([key_a, key_b, edge_id])) == 2 or \
+                len(set(other_keys_b).intersection([key_a, key_b, edge_id])) == 2:
+            return []
+
         shared_items = MeshPool.__get_shared_items(other_keys_a, other_keys_b)
         if len(shared_items) == 0:
             return []
@@ -135,6 +142,7 @@ class MeshPool(nn.Module):
             MeshPool.__union_groups(mesh, edge_groups, middle_edge, update_key_a)
             MeshPool.__union_groups(mesh, edge_groups, key_b, update_key_b)
             MeshPool.__union_groups(mesh, edge_groups, middle_edge, update_key_b)
+
             return [key_a, key_b, middle_edge]
 
     @staticmethod

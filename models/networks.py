@@ -7,6 +7,7 @@ from models.layers.mesh_conv import MeshConv
 import torch.nn.functional as F
 from models.layers.mesh_pool import MeshPool
 from models.layers.mesh_unpool import MeshUnpool
+from .losses import ce_jaccard, dice_loss, jaccard_loss, ce_loss, ce_dice
 
 
 ###############################################################################
@@ -87,7 +88,7 @@ def init_net(net, init_type, init_gain, gpu_ids):
         assert(torch.cuda.is_available())
         net.cuda(gpu_ids[0])
         net = net.cuda()
-        net = torch.nn.DataParallel(net, gpu_ids)
+    net = torch.nn.DataParallel(net, gpu_ids if gpu_ids else [0])
     if init_type != 'none':
         init_weights(net, init_type, init_gain)
     return net
@@ -114,7 +115,18 @@ def define_loss(opt):
     if opt.dataset_mode == 'classification':
         loss = torch.nn.CrossEntropyLoss()
     elif opt.dataset_mode == 'segmentation':
-        loss = torch.nn.CrossEntropyLoss(ignore_index=-1)
+        device = torch.device('cuda:{}'.format(opt.gpu_ids[0])) if opt.gpu_ids else torch.device('cpu')
+        weights = torch.FloatTensor(opt.loss_weights).to(device)
+
+        losses = {
+            'ce': functools.partial(ce_loss, weights=weights),
+            'dice': dice_loss,
+            'jaccard': jaccard_loss,
+            'ce_dice': functools.partial(ce_dice, weights=weights),
+            'ce_jaccard': functools.partial(ce_jaccard, weights=weights)
+        }
+
+        loss = losses.get(opt.loss)
     return loss
 
 ##############################################################################

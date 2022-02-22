@@ -11,7 +11,7 @@ class BaseOptions:
 
     def initialize(self):
         # data params
-        self.parser.add_argument('--dataroot', required=True, help='path to meshes (should have subfolders train, test)')
+        self.parser.add_argument('--dataroot', required=False, help='path to meshes (should have subfolders train, test)')
         self.parser.add_argument('--dataset_mode', choices={"classification", "segmentation"}, default='classification')
         self.parser.add_argument('--ninput_edges', type=int, default=750, help='# of input edges (will include dummy edges)')
         self.parser.add_argument('--max_dataset_size', type=int, default=float("inf"), help='Maximum number of samples per epoch')
@@ -26,6 +26,11 @@ class BaseOptions:
         self.parser.add_argument('--num_groups', type=int, default=16, help='# of groups for groupnorm')
         self.parser.add_argument('--init_type', type=str, default='normal', help='network initialization [normal|xavier|kaiming|orthogonal]')
         self.parser.add_argument('--init_gain', type=float, default=0.02, help='scaling factor for normal, xavier and orthogonal.')
+        self.parser.add_argument('--loss', type=str, default='ce_dice',
+                                 help='loss function; possible values: ce, dice, jaccard, ce_dice, ce_jaccard')
+        self.parser.add_argument('--loss_weights', nargs='+', default=[0.5, 2], type=float,
+                                 help='weights for loss function, used only with ce/ce_dice/ce_jaccard losses')
+
         # general params
         self.parser.add_argument('--num_threads', default=3, type=int, help='# threads for loading data')
         self.parser.add_argument('--gpu_ids', type=str, default='0', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
@@ -38,10 +43,10 @@ class BaseOptions:
         #
         self.initialized = True
 
-    def parse(self):
+    def parse(self, args=None):
         if not self.initialized:
             self.initialize()
-        self.opt, unknown = self.parser.parse_known_args()
+        self.opt, unknown = self.parser.parse_known_args(args)
         self.opt.is_train = self.is_train   # train or test
 
         str_ids = self.opt.gpu_ids.split(',')
