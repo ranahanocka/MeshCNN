@@ -1,19 +1,31 @@
 import numpy as np
 import os
+import pickle
 import ntpath
 
 
 def fill_mesh(mesh2fill, file: str, opt):
     load_path = get_mesh_path(file, opt.num_aug)
     if os.path.exists(load_path):
-        mesh_data = np.load(load_path, encoding='latin1', allow_pickle=True)
+        with open(load_path, 'rb') as f:
+            mesh_data = pickle.load(f)
     else:
         mesh_data = from_scratch(file, opt)
-        np.savez_compressed(load_path, gemm_edges=mesh_data.gemm_edges, vs=mesh_data.vs, edges=mesh_data.edges,
-                            edges_count=mesh_data.edges_count, ve=mesh_data.ve, v_mask=mesh_data.v_mask,
-                            filename=mesh_data.filename, sides=mesh_data.sides,
-                            edge_lengths=mesh_data.edge_lengths, edge_areas=mesh_data.edge_areas,
-                            features=mesh_data.features)
+        dict_save = {}
+        dict_save["gemm_edges"] = mesh_data.gemm_edges
+        dict_save["vs"]=mesh_data.vs
+        dict_save["edges"]=mesh_data.edges
+        dict_save["edges_count"]=mesh_data.edges_count
+        dict_save["ve"]=mesh_data.ve
+        dict_save["v_mask"]=mesh_data.v_mask
+        dict_save["filename"]=mesh_data.filename
+        dict_save["sides"]=mesh_data.sides
+        dict_save["edge_lengths"]=mesh_data.edge_lengths
+        dict_save["edge_areas"]=mesh_data.edge_areas
+        dict_save["features"]=mesh_data.features
+
+        with open(load_path, 'wb') as f:
+            pickle.dump(dict_save, f)
     mesh2fill.vs = mesh_data['vs']
     mesh2fill.edges = mesh_data['edges']
     mesh2fill.gemm_edges = mesh_data['gemm_edges']
@@ -31,7 +43,7 @@ def get_mesh_path(file: str, num_aug: int):
     dir_name = os.path.dirname(filename)
     prefix = os.path.basename(filename)
     load_dir = os.path.join(dir_name, 'cache')
-    load_file = os.path.join(load_dir, '%s_%03d.npz' % (prefix, np.random.randint(0, num_aug)))
+    load_file = os.path.join(load_dir, '%s_%03d.pkl' % (prefix, np.random.randint(0, num_aug)))
     if not os.path.isdir(load_dir):
         os.makedirs(load_dir, exist_ok=True)
     return load_file
