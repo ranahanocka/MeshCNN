@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 
 
-
 class MeshUnpool(nn.Module):
     def __init__(self, unroll_target):
         super(MeshUnpool, self).__init__()
@@ -13,9 +12,9 @@ class MeshUnpool(nn.Module):
 
     def pad_groups(self, group, unroll_start):
         start, end = group.shape
-        padding_rows =  unroll_start - start
+        padding_rows = unroll_start - start
         padding_cols = self.unroll_target - end
-        if padding_rows != 0 or padding_cols !=0:
+        if padding_rows != 0 or padding_cols != 0:
             padding = nn.ConstantPad2d((0, padding_cols, 0, padding_rows), 0)
             group = padding(group)
         return group

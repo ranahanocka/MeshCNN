@@ -5,7 +5,7 @@ from util.writer import Writer
 
 
 def run_test(epoch=-1):
-    print('Running Test')
+    print("Running Test")
     opt = TestOptions().parse()
     opt.serial_batches = True  # no shuffle
     dataset = DataLoader(opt)
@@ -21,5 +21,5 @@ def run_test(epoch=-1):
     return writer.acc
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_test()

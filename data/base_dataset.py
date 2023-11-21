@@ -1,10 +1,11 @@
-import torch.utils.data as data
-import numpy as np
-import pickle
 import os
+import pickle
+
+import numpy as np
+import torch.utils.data as data
+
 
 class BaseDataset(data.Dataset):
-
     def __init__(self, opt):
         self.opt = opt
         self.mean = 0
@@ -22,34 +23,37 @@ class BaseDataset(data.Dataset):
         (here N=5)
         """
 
-        mean_std_cache = os.path.join(self.root, 'mean_std_cache.p')
+        mean_std_cache = os.path.join(self.root, "mean_std_cache.p")
         if not os.path.isfile(mean_std_cache):
-            print('computing mean std from train data...')
+            print("computing mean std from train data...")
             # doesn't run augmentation during m/std computation
             num_aug = self.opt.num_aug
             self.opt.num_aug = 1
             mean, std = np.array(0), np.array(0)
             for i, data in enumerate(self):
                 if i % 500 == 0:
-                    print('{} of {}'.format(i, self.size))
-                features = data['edge_features']
+                    print("{} of {}".format(i, self.size))
+                features = data["edge_features"]
                 mean = mean + features.mean(axis=1)
                 std = std + features.std(axis=1)
             mean = mean / (i + 1)
             std = std / (i + 1)
-            transform_dict = {'mean': mean[:, np.newaxis], 'std': std[:, np.newaxis],
-                              'ninput_channels': len(mean)}
-            with open(mean_std_cache, 'wb') as f:
+            transform_dict = {
+                "mean": mean[:, np.newaxis],
+                "std": std[:, np.newaxis],
+                "ninput_channels": len(mean),
+            }
+            with open(mean_std_cache, "wb") as f:
                 pickle.dump(transform_dict, f)
-            print('saved: ', mean_std_cache)
+            print("saved: ", mean_std_cache)
             self.opt.num_aug = num_aug
         # open mean / std from file
-        with open(mean_std_cache, 'rb') as f:
+        with open(mean_std_cache, "rb") as f:
             transform_dict = pickle.load(f)
-            print('loaded mean / std from cache')
-            self.mean = transform_dict['mean']
-            self.std = transform_dict['std']
-            self.ninput_channels = transform_dict['ninput_channels']
+            print("loaded mean / std from cache")
+            self.mean = transform_dict["mean"]
+            self.std = transform_dict["std"]
+            self.ninput_channels = transform_dict["ninput_channels"]
 
 
 def collate_fn(batch):

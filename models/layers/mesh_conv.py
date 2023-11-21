@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class MeshConv(nn.Module):
     """ Computes convolution between edges and 4 incident (1-ring) edge neighbors
     in the forward pass takes:
@@ -9,9 +10,15 @@ class MeshConv(nn.Module):
     mesh: list of mesh data-structure (len(mesh) == Batch)
     and applies convolution
     """
+
     def __init__(self, in_channels, out_channels, k=5, bias=True):
         super(MeshConv, self).__init__()
-        self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=(1, k), bias=bias)
+        self.conv = nn.Conv2d(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            kernel_size=(1, k),
+            bias=bias,
+        )
         self.k = k
 
     def __call__(self, edge_f, mesh):
@@ -28,7 +35,9 @@ class MeshConv(nn.Module):
     def flatten_gemm_inds(self, Gi):
         (b, ne, nn) = Gi.shape
         ne += 1
-        batch_n = torch.floor(torch.arange(b * ne, device=Gi.device).float() / ne).view(b, ne)
+        batch_n = torch.floor(torch.arange(b * ne, device=Gi.device).float() / ne).view(
+            b, ne
+        )
         add_fac = batch_n * ne
         add_fac = add_fac.view(b, ne, 1)
         add_fac = add_fac.repeat(1, 1, nn)
@@ -44,10 +53,12 @@ class MeshConv(nn.Module):
         """
         Gishape = Gi.shape
         # pad the first row of  every sample in batch with zeros
-        padding = torch.zeros((x.shape[0], x.shape[1], 1), requires_grad=True, device=x.device)
+        padding = torch.zeros(
+            (x.shape[0], x.shape[1], 1), requires_grad=True, device=x.device
+        )
         # padding = padding.to(x.device)
         x = torch.cat((padding, x), dim=2)
-        Gi = Gi + 1 #shift
+        Gi = Gi + 1  # shift
 
         # first flatten indices
         Gi_flat = self.flatten_gemm_inds(Gi)
@@ -77,7 +88,13 @@ class MeshConv(nn.Module):
         """
         padded_gemm = torch.tensor(m.gemm_edges, device=device).float()
         padded_gemm = padded_gemm.requires_grad_()
-        padded_gemm = torch.cat((torch.arange(m.edges_count, device=device).float().unsqueeze(1), padded_gemm), dim=1)
+        padded_gemm = torch.cat(
+            (
+                torch.arange(m.edges_count, device=device).float().unsqueeze(1),
+                padded_gemm,
+            ),
+            dim=1,
+        )
         # pad using F
         padded_gemm = F.pad(padded_gemm, (0, 0, 0, xsz - m.edges_count), "constant", 0)
         padded_gemm = padded_gemm.unsqueeze(0)

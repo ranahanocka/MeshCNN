@@ -7,7 +7,6 @@ from heapq import heappop, heapify
 
 
 class MeshPool(nn.Module):
-    
     def __init__(self, target, multi_thread=False):
         super(MeshPool, self).__init__()
         self.__out_target = target
@@ -35,12 +34,16 @@ class MeshPool(nn.Module):
         if self.__multi_thread:
             for mesh_index in range(len(meshes)):
                 pool_threads[mesh_index].join()
-        out_features = torch.cat(self.__updated_fe).view(len(meshes), -1, self.__out_target)
+        out_features = torch.cat(self.__updated_fe).view(
+            len(meshes), -1, self.__out_target
+        )
         return out_features
 
     def __pool_main(self, mesh_index):
         mesh = self.__meshes[mesh_index]
-        queue = self.__build_queue(self.__fe[mesh_index, :, :mesh.edges_count], mesh.edges_count)
+        queue = self.__build_queue(
+            self.__fe[mesh_index, :, : mesh.edges_count], mesh.edges_count
+        )
         # recycle = []
         # last_queue_len = len(queue)
         last_count = mesh.edges_count + 1
@@ -52,17 +55,25 @@ class MeshPool(nn.Module):
             if mask[edge_id]:
                 self.__pool_edge(mesh, edge_id, mask, edge_groups)
         mesh.clean(mask, edge_groups)
-        fe = edge_groups.rebuild_features(self.__fe[mesh_index], mask, self.__out_target)
+        fe = edge_groups.rebuild_features(
+            self.__fe[mesh_index], mask, self.__out_target
+        )
         self.__updated_fe[mesh_index] = fe
 
     def __pool_edge(self, mesh, edge_id, mask, edge_groups):
         if self.has_boundaries(mesh, edge_id):
             return False
-        elif self.__clean_side(mesh, edge_id, mask, edge_groups, 0)\
-            and self.__clean_side(mesh, edge_id, mask, edge_groups, 2) \
-            and self.__is_one_ring_valid(mesh, edge_id):
-            self.__merge_edges[0] = self.__pool_side(mesh, edge_id, mask, edge_groups, 0)
-            self.__merge_edges[1] = self.__pool_side(mesh, edge_id, mask, edge_groups, 2)
+        elif (
+            self.__clean_side(mesh, edge_id, mask, edge_groups, 0)
+            and self.__clean_side(mesh, edge_id, mask, edge_groups, 2)
+            and self.__is_one_ring_valid(mesh, edge_id)
+        ):
+            self.__merge_edges[0] = self.__pool_side(
+                mesh, edge_id, mask, edge_groups, 0
+            )
+            self.__merge_edges[1] = self.__pool_side(
+                mesh, edge_id, mask, edge_groups, 2
+            )
             mesh.merge_vertices(edge_id)
             mask[edge_id] = False
             MeshPool.__remove_group(mesh, edge_groups, edge_id)
@@ -91,7 +102,6 @@ class MeshPool(nn.Module):
                 return True
         return False
 
-
     @staticmethod
     def __is_one_ring_valid(mesh, edge_id):
         v_a = set(mesh.edges[mesh.ve[mesh.edges[edge_id, 0]]].reshape(-1))
@@ -102,8 +112,20 @@ class MeshPool(nn.Module):
     def __pool_side(self, mesh, edge_id, mask, edge_groups, side):
         info = MeshPool.__get_face_info(mesh, edge_id, side)
         key_a, key_b, side_a, side_b, _, other_side_b, _, other_keys_b = info
-        self.__redirect_edges(mesh, key_a, side_a - side_a % 2, other_keys_b[0], mesh.sides[key_b, other_side_b])
-        self.__redirect_edges(mesh, key_a, side_a - side_a % 2 + 1, other_keys_b[1], mesh.sides[key_b, other_side_b + 1])
+        self.__redirect_edges(
+            mesh,
+            key_a,
+            side_a - side_a % 2,
+            other_keys_b[0],
+            mesh.sides[key_b, other_side_b],
+        )
+        self.__redirect_edges(
+            mesh,
+            key_a,
+            side_a - side_a % 2 + 1,
+            other_keys_b[1],
+            mesh.sides[key_b, other_side_b + 1],
+        )
         MeshPool.__union_groups(mesh, edge_groups, key_b, key_a)
         MeshPool.__union_groups(mesh, edge_groups, edge_id, key_a)
         mask[key_b] = False
@@ -115,20 +137,37 @@ class MeshPool(nn.Module):
     @staticmethod
     def __get_invalids(mesh, edge_id, edge_groups, side):
         info = MeshPool.__get_face_info(mesh, edge_id, side)
-        key_a, key_b, side_a, side_b, other_side_a, other_side_b, other_keys_a, other_keys_b = info
+        (
+            key_a,
+            key_b,
+            side_a,
+            side_b,
+            other_side_a,
+            other_side_b,
+            other_keys_a,
+            other_keys_b,
+        ) = info
         shared_items = MeshPool.__get_shared_items(other_keys_a, other_keys_b)
         if len(shared_items) == 0:
             return []
         else:
-            assert (len(shared_items) == 2)
+            assert len(shared_items) == 2
             middle_edge = other_keys_a[shared_items[0]]
             update_key_a = other_keys_a[1 - shared_items[0]]
             update_key_b = other_keys_b[1 - shared_items[1]]
             update_side_a = mesh.sides[key_a, other_side_a + 1 - shared_items[0]]
             update_side_b = mesh.sides[key_b, other_side_b + 1 - shared_items[1]]
             MeshPool.__redirect_edges(mesh, edge_id, side, update_key_a, update_side_a)
-            MeshPool.__redirect_edges(mesh, edge_id, side + 1, update_key_b, update_side_b)
-            MeshPool.__redirect_edges(mesh, update_key_a, MeshPool.__get_other_side(update_side_a), update_key_b, MeshPool.__get_other_side(update_side_b))
+            MeshPool.__redirect_edges(
+                mesh, edge_id, side + 1, update_key_b, update_side_b
+            )
+            MeshPool.__redirect_edges(
+                mesh,
+                update_key_a,
+                MeshPool.__get_other_side(update_side_a),
+                update_key_b,
+                MeshPool.__get_other_side(update_side_b),
+            )
             MeshPool.__union_groups(mesh, edge_groups, key_a, edge_id)
             MeshPool.__union_groups(mesh, edge_groups, key_b, edge_id)
             MeshPool.__union_groups(mesh, edge_groups, key_a, update_key_a)
@@ -165,9 +204,24 @@ class MeshPool(nn.Module):
         side_b = mesh.sides[edge_id, side + 1]
         other_side_a = (side_a - (side_a % 2) + 2) % 4
         other_side_b = (side_b - (side_b % 2) + 2) % 4
-        other_keys_a = [mesh.gemm_edges[key_a, other_side_a], mesh.gemm_edges[key_a, other_side_a + 1]]
-        other_keys_b = [mesh.gemm_edges[key_b, other_side_b], mesh.gemm_edges[key_b, other_side_b + 1]]
-        return key_a, key_b, side_a, side_b, other_side_a, other_side_b, other_keys_a, other_keys_b
+        other_keys_a = [
+            mesh.gemm_edges[key_a, other_side_a],
+            mesh.gemm_edges[key_a, other_side_a + 1],
+        ]
+        other_keys_b = [
+            mesh.gemm_edges[key_b, other_side_b],
+            mesh.gemm_edges[key_b, other_side_b + 1],
+        ]
+        return (
+            key_a,
+            key_b,
+            side_a,
+            side_b,
+            other_side_a,
+            other_side_b,
+            other_keys_a,
+            other_keys_b,
+        )
 
     @staticmethod
     def __remove_triplete(mesh, mask, edge_groups, invalid_edges):
@@ -178,7 +232,7 @@ class MeshPool(nn.Module):
             MeshPool.__remove_group(mesh, edge_groups, edge_key)
         mesh.edges_count -= 3
         vertex = list(vertex)
-        assert(len(vertex) == 1)
+        assert len(vertex) == 1
         mesh.remove_vertex(vertex[0])
 
     def __build_queue(self, features, edges_count):
@@ -186,7 +240,9 @@ class MeshPool(nn.Module):
         squared_magnitude = torch.sum(features * features, 0)
         if squared_magnitude.shape[-1] != 1:
             squared_magnitude = squared_magnitude.unsqueeze(-1)
-        edge_ids = torch.arange(edges_count, device=squared_magnitude.device, dtype=torch.float32).unsqueeze(-1)
+        edge_ids = torch.arange(
+            edges_count, device=squared_magnitude.device, dtype=torch.float32
+        ).unsqueeze(-1)
         heap = torch.cat((squared_magnitude, edge_ids), dim=-1).tolist()
         heapify(heap)
         return heap
@@ -200,4 +256,3 @@ class MeshPool(nn.Module):
     def __remove_group(mesh, edge_groups, index):
         edge_groups.remove_group(index)
         mesh.remove_group(index)
-
