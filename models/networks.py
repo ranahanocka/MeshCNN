@@ -1,10 +1,12 @@
+import functools
+
 import torch
 import torch.nn as nn
-from torch.nn import init
-import functools
-from torch.optim import lr_scheduler
-from models.layers.mesh_conv import MeshConv
 import torch.nn.functional as F
+from torch.nn import init
+from torch.optim import lr_scheduler
+
+from models.layers.mesh_conv import MeshConv
 from models.layers.mesh_pool import MeshPool
 from models.layers.mesh_unpool import MeshUnpool
 

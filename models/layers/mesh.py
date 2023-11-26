@@ -1,10 +1,12 @@
-from tempfile import mkstemp
-from shutil import move
-import torch
-import numpy as np
 import os
-from models.layers.mesh_union import MeshUnion
+from shutil import move
+from tempfile import mkstemp
+
+import numpy as np
+import torch
+
 from models.layers.mesh_prepare import fill_mesh
+from models.layers.mesh_union import MeshUnion
 
 
 class Mesh:

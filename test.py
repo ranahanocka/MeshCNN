@@ -1,6 +1,6 @@
-from options.test_options import TestOptions
 from data import DataLoader
 from models import create_model
+from options.test_options import TestOptions
 from util.writer import Writer
 
 

@@ -1,9 +1,10 @@
 import time
-from options.train_options import TrainOptions
+
 from data import DataLoader
 from models import create_model
-from util.writer import Writer
+from options.train_options import TrainOptions
 from test import run_test
+from util.writer import Writer
 
 if __name__ == "__main__":
     opt = TrainOptions().parse()

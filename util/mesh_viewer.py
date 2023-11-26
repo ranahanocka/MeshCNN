@@ -1,7 +1,7 @@
-import mpl_toolkits.mplot3d as a3
 import matplotlib.colors as colors
-import pylab as pl
+import mpl_toolkits.mplot3d as a3
 import numpy as np
+import pylab as pl
 
 V = np.array
 r2h = lambda x: colors.rgb2hex(tuple(map(lambda y: y / 255.0, x)))

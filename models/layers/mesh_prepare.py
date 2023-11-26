@@ -1,6 +1,7 @@
-import numpy as np
-import os
 import ntpath
+import os
+
+import numpy as np
 
 
 def fill_mesh(mesh2fill, file: str, opt):

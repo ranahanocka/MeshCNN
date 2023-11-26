@@ -1,7 +1,6 @@
-import pytest
+import glob
 import os
 import shutil
-import glob
 import subprocess
 
 """

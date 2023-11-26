@@ -1,7 +1,7 @@
-import bpy
 import os
 import sys
 
+import bpy
 
 """
 Simplifies mesh to target number of faces
