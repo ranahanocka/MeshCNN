@@ -54,6 +54,7 @@ class BaseDataset(data.Dataset):
             self.mean = transform_dict["mean"]
             self.std = transform_dict["std"]
             self.ninput_channels = transform_dict["ninput_channels"]
+        self.mean_defined = True
 
 
 def collate_fn(batch):
