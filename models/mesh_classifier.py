@@ -62,7 +62,11 @@ class ClassifierModel:
 
     def set_input(self, data):
         input_edge_features = torch.from_numpy(data["edge_features"]).float()
-        labels = torch.from_numpy(data["label"]).long()
+        labels = None
+        if self.opt.dataset_mode == "classification":
+            labels = torch.from_numpy(data["label"]).long()
+        elif self.opt.dataset_mode == "regression":
+            labels = torch.from_numpy(data["regression_target"]).float()
         # set inputs
         self.edge_features = input_edge_features.to(self.device).requires_grad_(
             self.is_train
@@ -124,12 +128,19 @@ class ClassifierModel:
         returns: number correct and total number
         """
         with torch.no_grad():
-            out = self.forward()
-            # compute number of correct
-            pred_class = out.data.max(1)[1]
-            label_class = self.labels
-            self.export_segmentation(pred_class.cpu())
-            correct = self.get_accuracy(pred_class, label_class)
+            if self.opt.dataset_mode == "classification":
+                out = self.forward()
+                # compute number of correct
+                pred_class = out.data.max(1)[1]
+                label_class = self.labels
+                self.export_segmentation(pred_class.cpu())
+                correct = self.get_accuracy(pred_class, label_class)
+            elif self.opt.dataset_mode == "regression":
+                out = self.forward()
+                # compute number of correct
+                pred = out.data
+                label_class = self.labels
+                correct = mae = self.get_accuracy(pred.cpu(), label_class.cpu())
         return correct, len(label_class)
 
     def get_accuracy(self, pred, labels):
@@ -138,6 +149,9 @@ class ClassifierModel:
             correct = pred.eq(labels).sum()
         elif self.opt.dataset_mode == "segmentation":
             correct = seg_accuracy(pred, self.soft_label, self.mesh)
+        elif self.opt.dataset_mode == "regression":
+            # calculate mean absolute error between pred and labels
+            correct = torch.abs(pred - labels).mean()
         return correct
 
     def export_segmentation(self, pred_seg):

@@ -151,6 +151,12 @@ def define_loss(opt):
         loss = torch.nn.CrossEntropyLoss()
     elif opt.dataset_mode == "segmentation":
         loss = torch.nn.CrossEntropyLoss(ignore_index=-1)
+    elif opt.dataset_mode == "regression":
+        loss = torch.nn.MSELoss()
+    else:
+        raise NotImplementedError(
+            f"choose dataset_mode from [classification | segmentation | regression] {opt.dataset_mode} is not supported"
+        )
     return loss
 
 
@@ -187,7 +193,7 @@ class MeshConvNet(nn.Module):
         self.gp = torch.nn.AvgPool1d(self.res[-1])
         # self.gp = torch.nn.MaxPool1d(self.res[-1])
         self.fc1 = nn.Linear(self.k[-1], fc_n)
-        self.fc2 = nn.Linear(fc_n, nclasses)
+        self.fc2 = nn.Linear(fc_n, nclasses) if nclasses >= 2 else nn.Linear(fc_n, 1)
 
     def forward(self, x, mesh):
 

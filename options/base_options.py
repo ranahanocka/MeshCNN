@@ -22,7 +22,7 @@ class BaseOptions:
         )
         self.parser.add_argument(
             "--dataset_mode",
-            choices={"classification", "segmentation"},
+            choices={"classification", "segmentation", "regression"},
             default="classification",
         )
         self.parser.add_argument(

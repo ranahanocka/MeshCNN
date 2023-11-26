@@ -14,6 +14,10 @@ def CreateDataset(opt):
         from data.classification_data import ClassificationData
 
         dataset = ClassificationData(opt)
+    elif opt.dataset_mode == "regression":
+        from data.sdf_regression_data import RegressionDataset
+
+        dataset = RegressionDataset(opt)
     return dataset
 
 
