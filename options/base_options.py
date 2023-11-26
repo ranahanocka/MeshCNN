@@ -117,6 +117,15 @@ class BaseOptions:
             help="exports intermediate collapses to this folder",
         )
         #
+        # sdf_regressino arguments
+        self.parser.add_argument(
+            "--point_encode",
+            type=str,
+            default="no_encode",
+            choices=["no_encode", "positional_encoding_3d"],
+            help="point encoding method from no_encdoe or positional_encoding_3d",
+        )
+
         self.initialized = True
 
     def parse(self):
