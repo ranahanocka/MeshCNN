@@ -41,7 +41,7 @@ class Writer:
 
     def print_current_losses(self, epoch, i, losses, t, t_data):
         """ prints train loss to terminal / file """
-        message = "(epoch: %d, iters: %d, time: %.3f, data: %.3f) loss: %.3f " % (
+        message = "(epoch: %d, iters: %d, time: %.3f, data: %.3f) loss: %.6f " % (
             epoch,
             i,
             t,
@@ -66,7 +66,7 @@ class Writer:
 
     def print_acc(self, epoch, acc):
         """ prints test accuracy to terminal / file """
-        message = "epoch: {}, TEST ACC: [{:.5} %]\n".format(epoch, acc * 100)
+        message = "epoch: {}, TEST ACC: [{:.8} %]\n".format(epoch, acc * 100)
         print(message)
         with open(self.testacc_log, "a") as log_file:
             log_file.write("%s\n" % message)

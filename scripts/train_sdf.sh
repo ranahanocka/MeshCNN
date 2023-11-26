@@ -16,4 +16,5 @@ python train.py \
 --output_dimension 1 \
 --num_samples 27000 \
 --point_encode no_encode \
+--lr 0.0001 \
 

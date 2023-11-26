@@ -65,41 +65,48 @@ class SdfDataset(BaseDataset):
         # TODO try to do it without encoding only xyz coordinates
 
 
-class MeshSDF(data.Dataset):
-    """convert point cloud to SDF"""
+class MeshSDF:
+    """
+    This class is used to load a mesh from a file and sample points from its surface.
+    It produces a point cloud of the surface and uses a KDTree to find the nearest neighbors of a point to estimate the
+    SDF values for some sample points.
+    :param point_cloud_path: path to the point cloud file
+    :param num_samples: number of points to sample from the surface per batch_sample
+    :param coarse_scale: ??
+    :param fine_scale: ??
+    :param num_closest_points: number of nearest neighbors to consider for SDF estimation
+    """
 
     def __init__(
         self,
-        pointcloud_path,
+        point_cloud_path,
         num_samples=(30 ** 3) // 3,
         coarse_scale=1e-1,
         fine_scale=1e-3,
+        num_closest_points=3,
     ):
         super().__init__()
         self.num_samples = num_samples
-        self.pointcloud_path = pointcloud_path
+        self.point_cloud_path = point_cloud_path
         self.coarse_scale = coarse_scale
         self.fine_scale = fine_scale
-        self.points = None
-        self.sdf = None
+        self.points = self.sdf = self.closest_points = None
         self.i = 0
-        self.load_mesh(pointcloud_path)
+        self.load_mesh(point_cloud_path)
         self.sample_surface()
+        self.num_closest_points = num_closest_points
 
-    def __len__(self):
-        return self.num_samples  # arbitrary
-
-    def load_mesh(self, pointcloud_path=None):
-        if not pointcloud_path:
-            pointcloud_path = self.pointcloud_path
-        if "xyz" in pointcloud_path:
-            pointcloud = np.genfromtxt(pointcloud_path)
-            self.v = pointcloud[:, :3]
-            self.n = pointcloud[:, 3:]
-        elif "obj" in pointcloud_path:
-            pointcloud = trimesh.load(pointcloud_path)
-            self.v = pointcloud.vertices
-            self.n = pointcloud.vertex_normals
+    def load_mesh(self, point_cloud_path=None):
+        if not point_cloud_path:
+            point_cloud_path = self.point_cloud_path
+        if "xyz" in point_cloud_path:
+            point_cloud = np.genfromtxt(point_cloud_path)
+            self.v = point_cloud[:, :3]
+            self.n = point_cloud[:, 3:]
+        elif "obj" in point_cloud_path:
+            point_cloud = trimesh.load(point_cloud_path)
+            self.v = point_cloud.vertices
+            self.n = point_cloud.vertex_normals
         else:
             raise NotImplementedError("Only xyz and obj files are supported")
 
@@ -132,12 +139,14 @@ class MeshSDF(data.Dataset):
         points[points < -0.5] += 1
 
         # use KDTree to get distance to surface and estimate the normal
-        sdf, idx = self.kd_tree.query(points, k=3)
+        sdf, idx = self.kd_tree.query(points, k=self.num_closest_points)
         avg_normal = np.mean(self.n[idx], axis=1)
         sdf = np.sum((points - self.v[idx][:, 0]) * avg_normal, axis=-1)
         sdf = sdf[..., None]
         self.points = points
         self.sdf = sdf
+        self.closest_points = self.v[idx][:, 0]
+        # shape closest points: (num_samples, num_closest_points, 3)
         self.i = 0
 
     def single_sample(self):
@@ -146,3 +155,14 @@ class MeshSDF(data.Dataset):
         point, sdf = self.points[self.i], self.sdf[self.i]
         self.i += 1
         return point, sdf
+
+    def single_sample_plus_nearest_neighbors(self):
+        if self.i >= self.num_samples:
+            self.sample_surface()
+        point, sdf, nn = (
+            self.points[self.i],
+            self.sdf[self.i],
+            self.closest_points[self.i, ...],
+        )
+        self.i += 1
+        return point, sdf, nn
