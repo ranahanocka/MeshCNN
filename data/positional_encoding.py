@@ -1,23 +1,34 @@
 from abc import abstractmethod, ABC
 
-import numpy as np
 import torch
 import torch.nn as nn
 
 
 class AbstractPointEncoding(nn.Module, ABC):
+    """
+    Abstract class for positional encodings.
+    A point encoding is a function that maps a point in 3D space to an encoding vector.
+    """
+
     def __init__(self, opt):
         super(AbstractPointEncoding, self).__init__()
         self.opt = opt
 
     @abstractmethod
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Point encoding function
+        :param x: point coordinates in (batch_size, 3) shape torch.Tensor
+        :return: point encoding in (batch_size, out_dim) shape
+        """
         pass
 
 
 class PositionalEncoding3D(AbstractPointEncoding):
-
-    id = "positional_encoding_3d"
+    """
+    Positional encoding for 3D points.
+    This encoding is inspired by the positional encoding used in the Transformer architecture.
+    """
 
     def __init__(self, opt):
         self.max_freq_log2 = opt.max_freq_log2 if hasattr(opt, "max_freq_log2") else 5
@@ -52,23 +63,27 @@ class PositionalEncoding3D(AbstractPointEncoding):
 
 
 class NoPointEncoding(AbstractPointEncoding):
-    id = "no_encode"
+    """
+    No point encoding at all.
+    """
 
     def __init__(self, opt):
         super(NoPointEncoding, self).__init__(opt)
 
     def forward(self, x):
-        # return torch.unsqueeze(x, 0) do this for array using numpy not torch
-        return np.expand_dims(x, 0)
+        return x
+
+
+point_encoders = {
+    "positional_encoding_3d": PositionalEncoding3D,
+    "no_encode": NoPointEncoding,
+}
 
 
 def point_encoder_fabric(opt) -> AbstractPointEncoding:
-    if opt.point_encode == PositionalEncoding3D.id:
-        return PositionalEncoding3D(opt)
-    elif opt.point_encode == NoPointEncoding.id:
-        return NoPointEncoding(opt)
-    else:
-        raise ValueError("Unknown point encoder id: {}".format(id))
+    if opt.point_encode not in point_encoders.keys():
+        raise ValueError("Unknown point encoder id: {}".format(opt.point_encode))
+    return point_encoders[opt.point_encode](opt)
 
 
 # Example usage:

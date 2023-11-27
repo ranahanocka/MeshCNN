@@ -1,68 +1,6 @@
-import os
-
 import numpy as np
-import torch
-import torch.utils.data as data
 import trimesh
 from pykdtree.kdtree import KDTree
-
-from data.base_dataset import BaseDataset
-from data.positional_encoding import PositionalEncoding3D
-
-
-class SdfDataset(BaseDataset):
-    """
-    Deprecated use sdf_regression_data file
-    """
-
-    def __init__(self, opt):
-        BaseDataset.__init__(self, opt)
-        self.opt = opt
-        self.device = (
-            torch.device("cuda:{}".format(opt.gpu_ids[0]))
-            if opt.gpu_ids
-            else torch.device("cpu")
-        )
-        self.root = opt.dataroot
-        self.dir = os.path.join(opt.dataroot)
-        self.get_mean_std()
-        self.output_dimensions = opt.output_dimension
-        self.paths = []
-        for x in os.walk(self.dir):
-            dir, direcs, paths = x
-            for path in paths:
-                if path.endswith(".xyz"):
-                    self.paths.append(os.path.join(dir, path))
-
-        self.dataset_length = len(self.paths)
-        self.num_samples = opt.num_samples
-        self.meshes = [MeshSDF(os.path.join(self.dir, path)) for path in self.paths]
-        [mesh.load_mesh() for mesh in self.meshes]
-        print(
-            "Initialized SDF Dataset and loaded point clouds from {}".format(self.dir)
-        )
-        max_freq_log2 = 5
-        num_freqs = 10
-        log_sampling = True
-        opt.max_freq_log2 = max_freq_log2
-        opt.num_freqs = num_freqs
-        opt.log_sampling = log_sampling
-
-        self.positional_encoder = PositionalEncoding3D(opt)
-
-    def __len__(self):
-        return self.dataset_length
-
-    """ Gets a sample for training sdf 
-    """
-
-    def __getitem__(self, index):
-        point, sdf = next(self.meshes[index % self.dataset_length])
-        point = torch.from_numpy(point).float()
-        # point: (3) to (1, 3)
-        point = point.unsqueeze(0)
-        point_encoding = self.positional_encoder.forward(point)[0]
-        # TODO try to do it without encoding only xyz coordinates
 
 
 class MeshSDF:
@@ -85,16 +23,18 @@ class MeshSDF:
         fine_scale=1e-3,
         num_closest_points=3,
     ):
-        super().__init__()
+        # params
         self.num_samples = num_samples
+        self.num_closest_points = num_closest_points
         self.point_cloud_path = point_cloud_path
         self.coarse_scale = coarse_scale
         self.fine_scale = fine_scale
+        # data to be filled
         self.points = self.sdf = self.closest_points = None
         self.i = 0
+        # finish initial setup
         self.load_mesh(point_cloud_path)
         self.sample_surface()
-        self.num_closest_points = num_closest_points
 
     def load_mesh(self, point_cloud_path=None):
         if not point_cloud_path:
@@ -145,7 +85,7 @@ class MeshSDF:
         sdf = sdf[..., None]
         self.points = points
         self.sdf = sdf
-        self.closest_points = self.v[idx][:, 0]
+        self.closest_points = self.v[idx]
         # shape closest points: (num_samples, num_closest_points, 3)
         self.i = 0
 

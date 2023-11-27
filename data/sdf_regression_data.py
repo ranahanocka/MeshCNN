@@ -52,9 +52,9 @@ class RegressionDataset(BaseDataset):
         # get sdf mesh and sample a point for regression target and positional encoding
         sdf_mesh = self.sdf_meshes[index % self.size]
         point, sdf = sdf_mesh.single_sample()
-        positional_encoded_point = self.positional_encoder.forward(point)[0].reshape(
-            (3, 1)
-        )
+        positional_encoded_point = self.positional_encoder.forward(
+            torch.from_numpy(np.expand_dims(point, 0))
+        )[0].reshape((3, 1))
         positional_encoded_point_repeated = positional_encoded_point.repeat(
             normed_edge_features.shape[1], 1
         )
