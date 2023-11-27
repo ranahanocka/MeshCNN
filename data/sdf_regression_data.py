@@ -54,9 +54,10 @@ class RegressionDataset(BaseDataset):
         point, sdf = sdf_mesh.single_sample()
         positional_encoded_point = self.positional_encoder.forward(
             torch.from_numpy(np.expand_dims(point, 0))
-        )[0].reshape((3, 1))
-        positional_encoded_point_repeated = positional_encoded_point.repeat(
-            normed_edge_features.shape[1], 1
+        )[0]
+        # positional_encoded_point  has shape (3) should be (3, 750)
+        positional_encoded_point_repeated = np.repeat(
+            np.expand_dims(positional_encoded_point, 1), 750, axis=1
         )
 
         meta = {

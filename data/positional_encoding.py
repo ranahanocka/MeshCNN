@@ -35,7 +35,6 @@ class PositionalEncoding3D(AbstractPointEncoding):
         self.num_freqs = opt.num_freqs if hasattr(opt, "num_freqs") else 2
         self.log_sampling = opt.log_sampling if hasattr(opt, "log_sampling") else True
         super(PositionalEncoding3D, self).__init__()
-
         self.embed_fns = []
         out_dim = 0
 
@@ -69,6 +68,7 @@ class NoPointEncoding(AbstractPointEncoding):
 
     def __init__(self, opt):
         super(NoPointEncoding, self).__init__(opt)
+        self.out_dim = 3
 
     def forward(self, x):
         return x
