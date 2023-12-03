@@ -1,6 +1,8 @@
 import os
 import time
 
+from options import base_options
+
 try:
     from tensorboardX import SummaryWriter
 except ImportError as error:
@@ -12,7 +14,7 @@ class Writer:
     def __init__(self, opt):
         self.name = opt.name
         self.opt = opt
-        self.save_dir = os.path.join(opt.checkpoints_dir, opt.name)
+        self.save_dir = opt.expr_dir
         self.log_name = os.path.join(self.save_dir, "loss_log.txt")
         self.testacc_log = os.path.join(self.save_dir, "testacc_log.txt")
         self.start_logs()
@@ -20,7 +22,9 @@ class Writer:
         self.ncorrect = 0
         #
         if opt.is_train and not opt.no_vis and SummaryWriter is not None:
-            self.display = SummaryWriter(comment=opt.name)
+            self.display = SummaryWriter(
+                log_dir=os.path.join("./runs", opt.name + base_options.time_s)
+            )
         else:
             self.display = None
 
@@ -55,7 +59,7 @@ class Writer:
     def plot_loss(self, loss, epoch, i, n):
         iters = i + (epoch - 1) * n
         if self.display:
-            self.display.add_scalar("data/train_loss", loss, iters)
+            self.display.add_scalar("data/train_loss_mse", loss, iters)
 
     def plot_model_wts(self, model, epoch):
         if self.opt.is_train and self.display:
@@ -66,14 +70,14 @@ class Writer:
 
     def print_acc(self, epoch, acc):
         """ prints test accuracy to terminal / file """
-        message = "epoch: {}, TEST ACC: [{:.8} %]\n".format(epoch, acc * 100)
+        message = "epoch: {}, TEST mae: [{:.8}]\n".format(epoch, acc)
         print(message)
         with open(self.testacc_log, "a") as log_file:
             log_file.write("%s\n" % message)
 
     def plot_acc(self, acc, epoch):
         if self.display:
-            self.display.add_scalar("data/test_acc", acc, epoch)
+            self.display.add_scalar("data/test_mae", acc, epoch)
 
     def reset_counter(self):
         """
