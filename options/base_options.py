@@ -1,9 +1,12 @@
 import argparse
+import datetime
 import os
 
 import torch
 
 from util import util
+
+time_s = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
 class BaseOptions:
@@ -12,6 +15,7 @@ class BaseOptions:
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
         self.initialized = False
+        self.is_train = False
 
     def initialize(self):
         # data params
@@ -159,7 +163,12 @@ class BaseOptions:
                 self.opt.checkpoints_dir, self.opt.name, self.opt.export_folder
             )
             util.mkdir(self.opt.export_folder)
-
+        expr_dir = os.path.join(
+            self.opt.checkpoints_dir,
+            self.opt.name,
+            time_s if self.is_train else self.opt.timestamp,
+        )
+        self.opt.expr_dir = expr_dir
         if self.is_train:
             print("------------ Options -------------")
             for k, v in sorted(args.items()):
@@ -167,7 +176,7 @@ class BaseOptions:
             print("-------------- End ----------------")
 
             # save to the disk
-            expr_dir = os.path.join(self.opt.checkpoints_dir, self.opt.name)
+
             util.mkdir(expr_dir)
 
             file_name = os.path.join(expr_dir, "opt.txt")

@@ -1,9 +1,9 @@
-from .base_options import BaseOptions
+from . import base_options
 
 
-class TestOptions(BaseOptions):
+class TestOptions(base_options.BaseOptions):
     def initialize(self):
-        BaseOptions.initialize(self)
+        base_options.BaseOptions.initialize(self)
         self.parser.add_argument(
             "--results_dir", type=str, default="./results/", help="saves results here."
         )
@@ -19,4 +19,6 @@ class TestOptions(BaseOptions):
         self.parser.add_argument(
             "--num_aug", type=int, default=1, help="# of augmentation files"
         )
-        self.is_train = False
+        self.parser.add_argument(
+            "--timestamp", type=str, default="", help="model id to load if set"
+        )
