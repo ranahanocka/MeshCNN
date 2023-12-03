@@ -1,3 +1,4 @@
+from datetime import datetime
 from os.path import join
 
 import torch
@@ -24,7 +25,7 @@ class ClassifierModel:
             if self.gpu_ids
             else torch.device("cpu")
         )
-        self.save_dir = join(opt.checkpoints_dir, opt.name)
+        self.save_dir = opt.expr_dir
         self.optimizer = None
         self.edge_features = None
         self.labels = None
@@ -150,8 +151,7 @@ class ClassifierModel:
         elif self.opt.dataset_mode == "segmentation":
             correct = seg_accuracy(pred, self.soft_label, self.mesh)
         elif self.opt.dataset_mode == "regression":
-            # calculate mean absolute error between pred and labels
-            correct = torch.abs(pred - labels).mean()
+            correct = abs(pred - labels).mean()
         return correct
 
     def export_segmentation(self, pred_seg):

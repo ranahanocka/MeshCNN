@@ -28,7 +28,9 @@ class RegressionDataset(BaseDataset):
 
         # modify for network later.
         opt.nclasses = self.nclasses
-        opt.input_nc = self.ninput_channels = 8
+        opt.input_nc = self.ninput_channels = 5 + 3 * (
+            1 if opt.point_encode == "no_encode" else 4
+        )
         self.mean_defined = False
         self.get_mean_std()
         self.sdf_meshes = [MeshSDF(path) for path, _ in self.paths]
@@ -54,8 +56,14 @@ class RegressionDataset(BaseDataset):
         point, sdf = sdf_mesh.single_sample()
         positional_encoded_point = self.positional_encoder.forward(
             torch.from_numpy(np.expand_dims(point, 0))
-        )[0]
-        # positional_encoded_point  has shape (3) should be (3, 750)
+        ).float()
+
+        positional_encoded_point = (
+            positional_encoded_point[0]
+            if len(positional_encoded_point.shape) == 2
+            else positional_encoded_point
+        )
+        # positional_encoded_point has shape (3) should be (3, 750) to concat with edge features
         positional_encoded_point_repeated = np.repeat(
             np.expand_dims(positional_encoded_point, 1), 750, axis=1
         )

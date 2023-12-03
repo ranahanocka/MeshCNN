@@ -31,34 +31,41 @@ class PositionalEncoding3D(AbstractPointEncoding):
     """
 
     def __init__(self, opt):
+        """
+        Input expected for this kind of positional
+        """
         self.max_freq_log2 = opt.max_freq_log2 if hasattr(opt, "max_freq_log2") else 5
         self.num_freqs = opt.num_freqs if hasattr(opt, "num_freqs") else 2
         self.log_sampling = opt.log_sampling if hasattr(opt, "log_sampling") else True
-        super(PositionalEncoding3D, self).__init__()
+        super(PositionalEncoding3D, self).__init__(opt)
         self.embed_fns = []
         out_dim = 0
 
-        for dim in range(3):  # 3D coordinates
-            freq_bands = (
-                torch.linspace(
-                    2.0 ** 0.0,
-                    2.0 ** self.max_freq_log2,
-                    self.num_freqs,
-                    dtype=torch.float64,
-                )
-                if not self.max_freq_log2
-                else 2.0 ** torch.linspace(0.0, self.max_freq_log2, self.num_freqs)
+        freq_bands = (
+            torch.linspace(
+                2.0 ** 0.0,
+                2.0 ** self.max_freq_log2,
+                self.num_freqs,
+                dtype=torch.float64,
             )
+            if not self.max_freq_log2
+            else 2.0 ** torch.linspace(0.0, self.max_freq_log2, self.num_freqs)
+        )
 
+        for dim in range(3):  # 3D coordinates
             for freq in freq_bands:
-                self.embed_fns.append(lambda x: torch.sin(x[:, dim] * freq))
-                self.embed_fns.append(lambda x: torch.cos(x[:, dim] * freq))
+                self.embed_fns.append(
+                    lambda x, dim=dim, freq=freq: torch.sin(x[:, dim] * freq)
+                )
+                self.embed_fns.append(
+                    lambda x, dim=dim, freq=freq: torch.cos(x[:, dim] * freq)
+                )
                 out_dim += 2
 
         self.out_dim = out_dim
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.cat([fn(x) for fn in self.embed_fns], -1)
+        return torch.stack([fn(x) for fn in self.embed_fns], 1)
 
 
 class NoPointEncoding(AbstractPointEncoding):
@@ -70,7 +77,7 @@ class NoPointEncoding(AbstractPointEncoding):
         super(NoPointEncoding, self).__init__(opt)
         self.out_dim = 3
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return x
 
 
