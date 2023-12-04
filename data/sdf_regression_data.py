@@ -11,7 +11,7 @@ from util.util import is_mesh_file, pad
 
 
 class RegressionDataset(BaseDataset):
-    def __init__(self, opt):
+    def __init__(self, opt, path=None):
         BaseDataset.__init__(self, opt)
         self.opt = opt
         self.device = (
@@ -22,7 +22,12 @@ class RegressionDataset(BaseDataset):
         self.root = opt.dataroot
         self.dir = os.path.join(opt.dataroot)
         self.classes, self.class_to_idx = self.find_classes(self.dir)
-        self.paths = self.make_dataset_by_class(self.dir, self.class_to_idx, opt.phase)
+        if path:
+            self.paths = [(path, 0)]
+        else:
+            self.paths = self.make_dataset_by_class(
+                self.dir, self.class_to_idx, opt.phase
+            )
         self.nclasses = 1
         self.size = len(self.paths)
 
@@ -46,11 +51,7 @@ class RegressionDataset(BaseDataset):
             export_folder=self.opt.export_folder,
         )
         # get edge features
-        edge_features = mesh.extract_features()
-        edge_features = pad(edge_features, self.opt.ninput_edges)
-        if not self.mean_defined:
-            return {"edge_features": edge_features}
-        normed_edge_features = (edge_features - self.mean) / self.std
+        normed_edge_features = self.get_normed_edge_features(mesh)
         # get sdf mesh and sample a point for regression target and positional encoding
         sdf_mesh = self.sdf_meshes[index % self.size]
         point, sdf = sdf_mesh.single_sample()
@@ -77,6 +78,14 @@ class RegressionDataset(BaseDataset):
             ),
         }
         return meta
+
+    def get_normed_edge_features(self, mesh):
+        edge_features = mesh.extract_features()
+        edge_features = pad(edge_features, self.opt.ninput_edges)
+        # if not self.mean_defined:
+        #    return {"edge_features": edge_features}
+        normed_edge_features = (edge_features - self.mean) / self.std
+        return normed_edge_features
 
     def __len__(self):
         return self.size
