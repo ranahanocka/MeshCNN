@@ -10,7 +10,7 @@ if __name__ == "__main__":
     opt = TrainOptions().parse()
     dataset = DataLoader(opt)
     dataset_size = len(dataset)
-    print("#training meshes = %d" % dataset_size)
+    print("#training meshes = %d" % (dataset_size / opt.batch_size))
 
     model = create_model(opt)
     writer = Writer(opt)
@@ -23,14 +23,14 @@ if __name__ == "__main__":
 
         for i, data in enumerate(dataset):
             iter_start_time = time.time()
-            if total_steps % opt.print_freq == 0:
+            if i % opt.print_freq == 0:
                 t_data = iter_start_time - iter_data_time
             total_steps += opt.batch_size
             epoch_iter += opt.batch_size
             model.set_input(data)
             model.optimize_parameters()
 
-            if total_steps % opt.print_freq == 0:
+            if i % opt.print_freq == 0:
                 loss = model.loss
                 t = (time.time() - iter_start_time) / opt.batch_size
                 writer.print_current_losses(epoch, epoch_iter, loss, t, t_data)
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         if opt.verbose_plot:
             writer.plot_model_wts(model, epoch)
 
-        if epoch % opt.run_test_freq == 0:
+        if epoch % opt.run_test_freq == 0 and epoch > 0:
             acc = run_test(epoch)
             writer.plot_acc(acc, epoch)
 

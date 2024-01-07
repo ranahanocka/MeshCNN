@@ -7,7 +7,7 @@ from data.base_dataset import BaseDataset
 from data.positional_encoding import point_encoder_fabric
 from data.sdf_bacon_mesh import MeshSDF
 from models.layers.mesh import Mesh
-from util.util import is_mesh_file, pad
+from util.util import is_mesh_file, pad, MESH_EXTENSIONS
 
 
 class RegressionDataset(BaseDataset):
@@ -30,6 +30,7 @@ class RegressionDataset(BaseDataset):
             )
         self.nclasses = 1
         self.size = len(self.paths)
+        self.sdf_meshes = [MeshSDF(path) for path, _ in self.paths]
 
         # modify for network later.
         opt.nclasses = self.nclasses
@@ -37,11 +38,11 @@ class RegressionDataset(BaseDataset):
             1 if opt.point_encode == "no_encode" else 4
         )
         self.mean_defined = False
-        self.get_mean_std()
-        self.sdf_meshes = [MeshSDF(path) for path, _ in self.paths]
         self.positional_encoder = point_encoder_fabric(opt)
+        self.get_mean_std()
 
     def __getitem__(self, index):
+        index = index % self.size
         path = self.paths[index][0]
         label = self.paths[index][1]
         mesh = Mesh(
@@ -52,6 +53,10 @@ class RegressionDataset(BaseDataset):
         )
         # get edge features
         normed_edge_features = self.get_normed_edge_features(mesh)
+        if not self.mean_defined:
+            meta = {"mesh": mesh, "label": label, "edge_features": normed_edge_features}
+            return meta
+
         # get sdf mesh and sample a point for regression target and positional encoding
         sdf_mesh = self.sdf_meshes[index % self.size]
         point, sdf = sdf_mesh.single_sample()
@@ -66,7 +71,9 @@ class RegressionDataset(BaseDataset):
         )
         # positional_encoded_point has shape (3) should be (3, 750) to concat with edge features
         positional_encoded_point_repeated = np.repeat(
-            np.expand_dims(positional_encoded_point, 1), 750, axis=1
+            np.expand_dims(positional_encoded_point, 1),
+            normed_edge_features.shape[1],
+            axis=1,
         )
 
         meta = {
@@ -74,7 +81,7 @@ class RegressionDataset(BaseDataset):
             "label": label,
             "regression_target": sdf,
             "edge_features": np.concatenate(
-                (normed_edge_features, positional_encoded_point_repeated,), axis=0,
+                (normed_edge_features, positional_encoded_point_repeated), axis=0,
             ),
         }
         return meta
@@ -82,13 +89,13 @@ class RegressionDataset(BaseDataset):
     def get_normed_edge_features(self, mesh):
         edge_features = mesh.extract_features()
         edge_features = pad(edge_features, self.opt.ninput_edges)
-        # if not self.mean_defined:
-        #    return {"edge_features": edge_features}
+        if not self.mean_defined:
+            return edge_features
         normed_edge_features = (edge_features - self.mean) / self.std
         return normed_edge_features
 
     def __len__(self):
-        return self.size
+        return self.size * self.opt.batch_size
 
     # this is when the folders are organized by class...
     @staticmethod
@@ -102,14 +109,15 @@ class RegressionDataset(BaseDataset):
     def make_dataset_by_class(dir, class_to_idx, phase):
         meshes = []
         dir = os.path.expanduser(dir)
-        for target in sorted(os.listdir(dir)):
-            d = os.path.join(dir, target)
-            if not os.path.isdir(d):
-                continue
-            for root, _, fnames in sorted(os.walk(d)):
-                for fname in sorted(fnames):
-                    if is_mesh_file(fname) and (root.count(phase) == 1):
-                        path = os.path.join(root, fname)
-                        item = (path, class_to_idx[target])
-                        meshes.append(item)
+        for root, _, fnames in sorted(os.walk(dir)):
+            for fname in sorted(fnames):
+                if is_mesh_file(fname):
+                    path = os.path.join(root, fname)
+                    item = (path, 1)
+                    meshes.append(item)
+        if len(meshes) == 0:
+            raise RuntimeError(
+                "Found 0 meshes in subfolders of: " + dir + "\n"
+                "Supported mesh extensions are: " + ",".join(MESH_EXTENSIONS)
+            )
         return meshes

@@ -21,6 +21,11 @@ def is_mesh_file(filename):
 
 
 def pad(input_arr, target_length, val=0, dim=1):
+    """
+    Pads an array to a target length with a given value
+    """
+    if input_arr.shape[dim] > target_length:
+        return input_arr
     shp = input_arr.shape
     npad = [(0, 0) for _ in range(len(shp))]
     npad[dim] = (0, target_length - shp[dim])

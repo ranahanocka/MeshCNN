@@ -1,4 +1,5 @@
 from . import base_options
+from .base_options import time_s
 
 
 class TestOptions(base_options.BaseOptions):
@@ -20,5 +21,5 @@ class TestOptions(base_options.BaseOptions):
             "--num_aug", type=int, default=1, help="# of augmentation files"
         )
         self.parser.add_argument(
-            "--timestamp", type=str, default="", help="model id to load if set"
+            "--timestamp", type=str, default=time_s, help="model id to load if set"
         )
