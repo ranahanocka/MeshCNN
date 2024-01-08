@@ -10,6 +10,8 @@ time_s = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
 class BaseOptions:
+    EXTRACTOR_CLASS = "MeshCNN"
+
     def __init__(self):
         self.parser = argparse.ArgumentParser(
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
