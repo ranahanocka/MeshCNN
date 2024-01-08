@@ -14,7 +14,7 @@ class BaseDataset(data.Dataset):
         super(BaseDataset, self).__init__()
 
     def get_mean_std(self):
-        """ Computes Mean and Standard Deviation from Training Data
+        """Computes Mean and Standard Deviation from Training Data
         If mean/std file doesn't exist, will compute one
         :returns
         mean: N-dimensional mean
@@ -24,6 +24,12 @@ class BaseDataset(data.Dataset):
         """
 
         mean_std_cache = os.path.join(self.root, "mean_std_cache.p")
+        if not os.path.exists(self.root):
+            mean_std_cache = os.path.join(
+                os.path.dirname(self.paths[0][0]),
+                os.path.splitext(os.path.basename(self.paths[0][0]))[0]
+                + "_mean_std_cache.p",
+            )
         if not os.path.isfile(mean_std_cache):
             print("computing mean std from train data...")
             # doesn't run augmentation during m/std computation
@@ -31,6 +37,8 @@ class BaseDataset(data.Dataset):
             self.opt.num_aug = 1
             mean, std = np.array(0), np.array(0)
             for i, data in enumerate(self):
+                if i == self.size:
+                    break
                 if i % 500 == 0:
                     print("{} of {}".format(i, self.size))
                 features = data["edge_features"]

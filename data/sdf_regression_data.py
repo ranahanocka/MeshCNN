@@ -20,14 +20,16 @@ class RegressionDataset(BaseDataset):
             else torch.device("cpu")
         )
         self.root = opt.dataroot
-        self.dir = os.path.join(opt.dataroot)
-        self.classes, self.class_to_idx = self.find_classes(self.dir)
         if path:
             self.paths = [(path, 0)]
         else:
-            self.paths = self.make_dataset_by_class(
-                self.dir, self.class_to_idx, opt.phase
-            )
+            dire = os.path.join(opt.dataroot)
+            if not os.path.exists(dire):
+                raise FileNotFoundError(
+                    f"Could not find data directory {opt.dataroot} or {dire}"
+                )
+            _, class_to_idx = self.find_classes(dire)
+            self.paths = self.make_dataset_by_class(dire, class_to_idx, opt.phase)
         self.nclasses = 1
         self.size = len(self.paths)
         self.sdf_meshes = [MeshSDF(path) for path, _ in self.paths]
@@ -81,7 +83,8 @@ class RegressionDataset(BaseDataset):
             "label": label,
             "regression_target": sdf,
             "edge_features": np.concatenate(
-                (normed_edge_features, positional_encoded_point_repeated), axis=0,
+                (normed_edge_features, positional_encoded_point_repeated),
+                axis=0,
             ),
         }
         return meta

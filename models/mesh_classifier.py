@@ -8,7 +8,7 @@ from . import networks
 
 
 class ClassifierModel:
-    """ Class for training Model weights
+    """Class for training Model weights
 
     :args opt: structure containing configuration params
     e.g.,
@@ -61,19 +61,20 @@ class ClassifierModel:
         if not self.is_train or opt.continue_train:
             self.load_network(opt.which_epoch)
 
-    def set_input(self, data):
+    def set_input(self, data, inference=False):
         input_edge_features = torch.from_numpy(data["edge_features"]).float()
+        self.edge_features = input_edge_features.to(self.device).requires_grad_(
+            self.is_train
+        )
+        self.mesh = data["mesh"]
+        if inference:
+            return  # At inference time, we don't need to set labels.
         labels = None
         if self.opt.dataset_mode == "classification":
             labels = torch.from_numpy(data["label"]).long()
         elif self.opt.dataset_mode == "regression":
             labels = torch.from_numpy(data["regression_target"]).float()
-        # set inputs
-        self.edge_features = input_edge_features.to(self.device).requires_grad_(
-            self.is_train
-        )
         self.labels = labels.to(self.device)
-        self.mesh = data["mesh"]
         if self.opt.dataset_mode == "segmentation" and not self.is_train:
             self.soft_label = torch.from_numpy(data["soft_label"])
 
@@ -145,7 +146,7 @@ class ClassifierModel:
         return correct, len(label_class)
 
     def get_accuracy(self, pred, labels):
-        """computes accuracy for classification / segmentation """
+        """computes accuracy for classification / segmentation"""
         if self.opt.dataset_mode == "classification":
             correct = pred.eq(labels).sum()
         elif self.opt.dataset_mode == "segmentation":
