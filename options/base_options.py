@@ -128,7 +128,6 @@ class BaseOptions:
             "--point_encode",
             type=str,
             default="no_encode",
-            choices=["no_encode", "positional_encoding_3d"],
             help="point encoding method from no_encdoe or positional_encoding_3d",
         )
 

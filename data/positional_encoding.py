@@ -39,7 +39,7 @@ class NerfEmbedder(AbstractPointEncoding):
         embed_fns = []
         d = self.input_dims
         out_dim = 0
-        if True:
+        if False:
             embed_fns.append(lambda x: x)
             out_dim += d
 
