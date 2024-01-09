@@ -1,6 +1,7 @@
 from datetime import datetime
 from os.path import join
 
+import numpy as np
 import torch
 
 from util.util import seg_accuracy, print_network
@@ -62,7 +63,12 @@ class ClassifierModel:
             self.load_network(opt.which_epoch)
 
     def set_input(self, data, inference=False):
-        input_edge_features = torch.from_numpy(data["edge_features"]).float()
+        if type(data["edge_features"]) == torch.Tensor:
+            input_edge_features = data["edge_features"].float()
+        elif type(data["edge_features"]) == np.ndarray:
+            input_edge_features = torch.from_numpy(data["edge_features"]).float()
+        else:
+            raise ValueError("edge_features must be either torch.Tensor or np.ndarray")
         self.edge_features = input_edge_features.to(self.device).requires_grad_(
             self.is_train
         )
