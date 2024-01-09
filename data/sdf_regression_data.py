@@ -36,11 +36,10 @@ class RegressionDataset(BaseDataset):
 
         # modify for network later.
         opt.nclasses = self.nclasses
-        opt.input_nc = self.ninput_channels = 5 + 3 * (
-            1 if opt.point_encode == "no_encode" else 4
-        )
-        self.mean_defined = False
         self.positional_encoder = point_encoder_fabric(opt)
+
+        opt.input_nc = self.ninput_channels = 5 + 3 * opt.encoding_factor
+        self.mean_defined = False
         self.get_mean_std()
 
     def __getitem__(self, index):

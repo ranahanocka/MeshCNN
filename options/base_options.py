@@ -130,6 +130,12 @@ class BaseOptions:
             default="no_encode",
             help="point encoding method from no_encdoe or positional_encoding_3d",
         )
+        self.parser.add_argument(
+            "--include_input_in_encoding",
+            type=bool,
+            default=True,
+            help="WHether to include the input coords in the point encoding",
+        )
 
         self.initialized = True
 

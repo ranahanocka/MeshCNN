@@ -24,14 +24,25 @@ class AbstractPointEncoding(nn.Module, ABC):
         """
         pass
 
+    def get_encoding_factor(self) -> int:
+        return 1
+
 
 # Positional encoding (section 5.1)
 class NerfEmbedder(AbstractPointEncoding):
+    def get_encoding_factor(self) -> int:
+        return 4 + 1 * self.include_input_in_encoding
+
     def __init__(self, opt):
         self.max_freq_log2 = opt.max_freq_log2 if hasattr(opt, "max_freq_log2") else 5
         self.num_freqs = opt.num_freqs if hasattr(opt, "num_freqs") else 2
         self.log_sampling = opt.log_sampling if hasattr(opt, "log_sampling") else True
         self.input_dims = opt.input_dims if hasattr(opt, "input_dims") else 3
+        self.include_input_in_encoding = (
+            opt.include_input_in_encoding
+            if hasattr(opt, "include_input_in_encoding")
+            else False
+        )
         self.create_embedding_fn()
         super(NerfEmbedder, self).__init__(opt)
 
@@ -39,7 +50,7 @@ class NerfEmbedder(AbstractPointEncoding):
         embed_fns = []
         d = self.input_dims
         out_dim = 0
-        if False:
+        if self.include_input_in_encoding:
             embed_fns.append(lambda x: x)
             out_dim += d
 
@@ -74,6 +85,9 @@ class PositionalEncoding3D(AbstractPointEncoding):
         embed_fns (list): A list of lambda functions that apply sinusoidal and cosinusoidal transformations to the input points.
         out_dim (int): The output dimension of the positional encoding.
     """
+
+    def get_encoding_factor(self) -> int:
+        return 4
 
     def __init__(self, opt):
         self.max_freq_log2 = opt.max_freq_log2 if hasattr(opt, "max_freq_log2") else 5
@@ -132,7 +146,9 @@ point_encoders = {
 def point_encoder_fabric(opt) -> AbstractPointEncoding:
     if opt.point_encode not in point_encoders.keys():
         raise ValueError("Unknown point encoder id: {}".format(opt.point_encode))
-    return point_encoders[opt.point_encode](opt)
+    encoder = point_encoders[opt.point_encode](opt)
+    setattr(opt, "encoding_factor", encoder.get_encoding_factor())
+    return encoder
 
 
 # Example usage:
