@@ -125,7 +125,7 @@ class NoPointEncoding(AbstractPointEncoding):
 point_encoders = {
     "positional_encoding_3d": PositionalEncoding3D,
     "no_encode": NoPointEncoding,
-    "nerf_embedding": NerfEmbedder,
+    "nerf_encoding": NerfEmbedder,
 }
 
 
