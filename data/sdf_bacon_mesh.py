@@ -49,7 +49,10 @@ class MeshSDF:
             self.n = point_cloud.vertex_normals
         else:
             raise NotImplementedError("Only xyz and obj files are supported")
-
+        if self.v.shape[0] != self.n.shape[0]:
+            raise ValueError(
+                f"Point cloud vectors and normals have different number of points: {self.v.shape[0]} and {self.n.shape[0]}"
+            )
         n_norm = np.linalg.norm(self.n, axis=-1)[:, None]
         n_norm[n_norm == 0] = 1.0
         self.n = self.n / n_norm

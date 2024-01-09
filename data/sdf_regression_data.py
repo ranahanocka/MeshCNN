@@ -83,8 +83,7 @@ class RegressionDataset(BaseDataset):
             "label": label,
             "regression_target": sdf,
             "edge_features": np.concatenate(
-                (normed_edge_features, positional_encoded_point_repeated),
-                axis=0,
+                (normed_edge_features, positional_encoded_point_repeated), axis=0,
             ),
         }
         return meta
@@ -98,7 +97,7 @@ class RegressionDataset(BaseDataset):
         return normed_edge_features
 
     def __len__(self):
-        return self.size * self.opt.batch_size
+        return self.size * self.opt.batch_size * 100
 
     # this is when the folders are organized by class...
     @staticmethod
