@@ -148,7 +148,7 @@ class ClassifierModel:
                 # compute number of correct
                 pred = out.data
                 label_class = self.labels
-                correct = mae = self.get_accuracy(pred.cpu(), label_class.cpu())
+                correct = mae_times_n = self.get_accuracy(pred.cpu(), label_class.cpu())
         return correct, len(label_class)
 
     def get_accuracy(self, pred, labels):
@@ -158,7 +158,7 @@ class ClassifierModel:
         elif self.opt.dataset_mode == "segmentation":
             correct = seg_accuracy(pred, self.soft_label, self.mesh)
         elif self.opt.dataset_mode == "regression":
-            correct = abs(pred - labels).mean()
+            correct = abs(pred - labels).sum()
         return correct
 
     def export_segmentation(self, pred_seg):
