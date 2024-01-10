@@ -38,6 +38,7 @@ class BaseDataset(data.Dataset):
             mean, std = np.array(0), np.array(0)
             for i, data in enumerate(self):
                 if i == self.size:
+                    i = self.size - 1
                     break
                 if i % 500 == 0:
                     print("{} of {}".format(i, self.size))
