@@ -26,10 +26,11 @@ class BaseDataset(data.Dataset):
         mean_std_cache = os.path.join(self.root, "mean_std_cache.p")
         if not os.path.exists(self.root):
             mean_std_cache = os.path.join(
-                os.path.dirname(self.paths[0][0]),
-                os.path.splitext(os.path.basename(self.paths[0][0]))[0]
-                + "_mean_std_cache.p",
+                os.path.dirname(self.paths[0][0]), "mean_std_cache.p",
             )
+        # TODO: Potentially it could be an issue that while we normalize our bacon_meshes one by one, we compute the
+        #  mean and std over all the meshcnn meshes. This will potentially lead to a different normalization and issues
+        #  when generalizing over multiple objects in one dataset.
         if not os.path.isfile(mean_std_cache):
             print("computing mean std from train data...")
             # doesn't run augmentation during m/std computation
