@@ -28,6 +28,7 @@ class BaseDataset(data.Dataset):
             mean_std_cache = os.path.join(
                 os.path.dirname(self.paths[0][0]), "mean_std_cache.p",
             )
+
         # TODO: Potentially it could be an issue that while we normalize our bacon_meshes one by one, we compute the
         #  mean and std over all the meshcnn meshes. This will potentially lead to a different normalization and issues
         #  when generalizing over multiple objects in one dataset.

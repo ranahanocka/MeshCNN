@@ -3,7 +3,7 @@ import time
 from data import DataLoader
 from models import create_model
 from options.train_options import TrainOptions
-from test import run_test
+from test import run_test, rebuild_shape
 from util.writer import Writer
 
 if __name__ == "__main__":
@@ -64,4 +64,6 @@ if __name__ == "__main__":
             acc = run_test(epoch)
             writer.plot_acc(acc, epoch)
 
+    for grid_size in [10, 25, 50, 100, 200]:
+        rebuild_shape(grid_size)
     writer.close()

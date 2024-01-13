@@ -153,11 +153,34 @@ def define_loss(opt):
         loss = torch.nn.CrossEntropyLoss(ignore_index=-1)
     elif opt.dataset_mode == "regression":
         loss = torch.nn.MSELoss()
+        # TODO try custom loss:
+        # loss = CustomMSELoss(alpha=0.01)
     else:
         raise NotImplementedError(
             f"choose dataset_mode from [classification | segmentation | regression] {opt.dataset_mode} is not supported"
         )
     return loss
+
+
+class CustomMSELoss(nn.Module):
+    def __init__(self, alpha=1.0):
+        super(CustomMSELoss, self).__init__()
+        self.mse_loss = nn.MSELoss()
+        self.alpha = alpha
+
+    def forward(self, output, target):
+        # Calculate the MSE loss
+        mse_loss = self.mse_loss(output, target)
+
+        # Calculate the penalty for wrong sign
+        sign_penalty = self.alpha * torch.mean(
+            (output * target < 0).float() * torch.sqrt(torch.abs(output * target))
+        )
+
+        # Combine the MSE loss and the sign penalty
+        total_loss = mse_loss + sign_penalty
+
+        return total_loss
 
 
 ##############################################################################
