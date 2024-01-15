@@ -31,7 +31,7 @@ class AbstractPointEncoding(nn.Module, ABC):
 # Positional encoding (section 5.1)
 class NerfEmbedder(AbstractPointEncoding):
     def get_encoding_factor(self) -> int:
-        return 4 + 1 * self.include_input_in_encoding
+        return 2 * self.num_freqs + 1 * self.include_input_in_encoding
 
     def __init__(self, opt):
         self.max_freq_log2 = opt.max_freq_log2 if hasattr(opt, "max_freq_log2") else 5

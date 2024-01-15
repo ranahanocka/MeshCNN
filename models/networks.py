@@ -109,8 +109,8 @@ def init_weights(net, init_type, init_gain):
 def init_net(net, init_type, init_gain, gpu_ids):
     if len(gpu_ids) > 0:
         assert torch.cuda.is_available()
-        net.cuda(gpu_ids[0])
-        net = net.cuda()
+        net.to("cuda")
+        net = net.to("cuda")
         net = torch.nn.DataParallel(net, gpu_ids)
     if init_type != "none":
         init_weights(net, init_type, init_gain)

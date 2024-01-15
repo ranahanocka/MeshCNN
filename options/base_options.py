@@ -134,7 +134,13 @@ class BaseOptions:
             "--include_input_in_encoding",
             type=bool,
             default=True,
-            help="WHether to include the input coords in the point encoding",
+            help="Whether to include the input coords in the point encoding",
+        )
+        self.parser.add_argument(
+            "--num_freqs",
+            type=int,
+            default=2,
+            help="number of frequencies to use in positional encoding",  #
         )
 
         self.initialized = True

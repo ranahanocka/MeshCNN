@@ -18,7 +18,7 @@ class MeshSDF:
     def __init__(
         self,
         point_cloud_path,
-        num_samples=(30 ** 3) // 3,
+        num_samples=200,
         coarse_scale=1e-1,
         fine_scale=1e-3,
         num_closest_points=3,
