@@ -25,6 +25,8 @@ def fill_mesh(mesh2fill, file: str, opt):
             features=mesh_data.features,
         )
     mesh2fill.vs = mesh_data["vs"]
+    if opt.normalize_mesh:
+        normalize(mesh2fill, opt)
     mesh2fill.edges = mesh_data["edges"]
     mesh2fill.gemm_edges = mesh_data["gemm_edges"]
     mesh2fill.edges_count = int(mesh_data["edges_count"])
@@ -210,6 +212,17 @@ def augmentation(mesh, opt, faces=None):
 def post_augmentation(mesh, opt):
     if hasattr(opt, "slide_verts") and opt.slide_verts:
         slide_verts(mesh, opt.slide_verts)
+
+
+def normalize(mesh, opt):
+    if hasattr(opt, "normalize_mesh") and opt.normalize_mesh:
+        coords = mesh.vs
+        coords -= np.mean(coords, axis=0, keepdims=True)
+        coord_max = np.amax(coords)
+        coord_min = np.amin(coords)
+        coords = (coords - coord_min) / (coord_max - coord_min) * 0.9
+        coords -= 0.45
+        mesh.vs = coords
 
 
 def slide_verts(mesh, prct):

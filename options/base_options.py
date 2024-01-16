@@ -142,6 +142,12 @@ class BaseOptions:
             default=2,
             help="number of frequencies to use in positional encoding",  #
         )
+        self.parser.add_argument(
+            "--normalize_mesh",
+            type=bool,
+            default=False,
+            help="Whether to normalize the mesh like bacon",
+        )
 
         self.initialized = True
 
