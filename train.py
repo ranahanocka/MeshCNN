@@ -68,8 +68,9 @@ if __name__ == "__main__":
             writer.plot_model_wts(model, epoch)
 
         if epoch % opt.run_test_freq == 0 and epoch > 0:
-            acc = run_test(epoch)
-            writer.plot_acc(acc, epoch)
+            mae, sign_accuracy = run_test(epoch)
+            writer.plot_acc(mae, epoch, "data/test_mae")
+            writer.plot_acc(sign_accuracy, epoch, "data/test_sign_acc")
     print("Finished training")
     # for grid_size in [10, 25, 50, 100, 200]:
     #    rebuild_shape(grid_size)

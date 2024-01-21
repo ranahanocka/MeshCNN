@@ -23,12 +23,16 @@ def run_test(epoch=-1):
     writer = Writer(opt)
     # test
     writer.reset_counter()
+    complete_sign_correct = 0
     for i, data in enumerate(dataset):
         model.set_input(data)
-        mae, nexamples = model.test()
+        metrics, nexamples = model.test()
+        mae, sign_correct = metrics
         writer.update_counter(mae, nexamples)
-    writer.print_acc(epoch, writer.acc)
-    return writer.acc
+        complete_sign_correct += sign_correct
+    sign_accuracy = complete_sign_correct / writer.nexamples
+    writer.print_acc(epoch, writer.acc, sign_accuracy=sign_accuracy)
+    return writer.acc, sign_accuracy
 
 
 def rebuild_shape(grid_size=100, opt=None, part_to_sample: float = 0.75):

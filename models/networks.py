@@ -148,18 +148,18 @@ def define_classifier(
 
 def define_loss(opt):
     if opt.dataset_mode == "classification":
-        loss = torch.nn.CrossEntropyLoss()
+        return torch.nn.CrossEntropyLoss()
     elif opt.dataset_mode == "segmentation":
-        loss = torch.nn.CrossEntropyLoss(ignore_index=-1)
+        return torch.nn.CrossEntropyLoss(ignore_index=-1)
     elif opt.dataset_mode == "regression":
-        loss = torch.nn.MSELoss()
-        # TODO try custom loss:
-        # loss = CustomMSELoss(alpha=0.01)
-    else:
-        raise NotImplementedError(
-            f"choose dataset_mode from [classification | segmentation | regression] {opt.dataset_mode} is not supported"
-        )
-    return loss
+        if not hasattr(opt, "loss") or opt.loss == "mse":
+            return torch.nn.MSELoss()
+        elif opt.loss == "custom_loss":
+            alpha = 0.5 if not hasattr(opt, "loss_alpha") else opt.loss_alpha
+            return CustomMSELoss(alpha=alpha)
+    raise NotImplementedError(
+        f"choose dataset_mode from [classification | segmentation | regression] {opt.dataset_mode} is not supported"
+    )
 
 
 class CustomMSELoss(nn.Module):
