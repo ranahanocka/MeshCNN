@@ -51,7 +51,7 @@ class BaseOptions:
             "--arch", type=str, default="mconvnet", help="selects network to use"
         )  # todo add choices
         self.parser.add_argument(
-            "--resblocks", type=int, default=0, help="# of res blocks"
+            "--resblocks", type=int, default=1, help="# of res blocks"
         )
         self.parser.add_argument(
             "--fc_n", type=int, default=100, help="# between fc and nclasses"
@@ -147,6 +147,16 @@ class BaseOptions:
             type=bool,
             default=False,
             help="Whether to normalize the mesh like bacon",
+        )
+
+        self.parser.add_argument(
+            "--loss", type=str, default="mse", help="loss function to use",
+        )
+        self.parser.add_argument(
+            "--loss_alpha",
+            type=float,
+            default=0.5,
+            help="alpha param for loss function",
         )
 
         self.initialized = True
