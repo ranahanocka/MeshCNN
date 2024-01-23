@@ -157,6 +157,8 @@ def define_loss(opt):
         elif opt.loss == "custom_loss":
             alpha = 0.5 if not hasattr(opt, "loss_alpha") else opt.loss_alpha
             return CustomMSELoss(alpha=alpha)
+        elif opt.loss == "custom_relu_mse_loss":
+            return CustomHingeMSELoss()
     raise NotImplementedError(
         f"choose dataset_mode from [classification | segmentation | regression] {opt.dataset_mode} is not supported"
     )
@@ -173,14 +175,34 @@ class CustomMSELoss(nn.Module):
         mse_loss = self.mse_loss(output, target)
 
         # Calculate the penalty for wrong sign
-        sign_penalty = self.alpha * torch.mean(
-            (output * target < 0).float() * torch.sqrt(torch.abs(output * target))
+        sign_penalty = torch.mean(
+            torch.where(
+                output * target < 0,
+                self.alpha * torch.abs(output - target),
+                torch.zeros_like(output),
+            )
         )
-
         # Combine the MSE loss and the sign penalty
         total_loss = mse_loss + sign_penalty
 
         return total_loss
+
+
+class CustomHingeMSELoss(nn.Module):
+    def __init__(self):
+        super(CustomHingeMSELoss, self).__init__()
+
+    def forward(self, output, target):
+        # Calculate the penalty for wrong sign
+        sign_penalty = torch.mean(
+            torch.where(
+                output * target < 0,
+                torch.square(output - target),
+                torch.zeros_like(output),
+            )
+        )
+        # Combine the MSE loss and the sign penalty
+        return sign_penalty
 
 
 ##############################################################################
@@ -227,7 +249,6 @@ class MeshConvNet(nn.Module):
 
         x = self.gp(x)
         x = x.view(-1, self.k[-1])
-
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
@@ -255,7 +276,7 @@ class MResConv(nn.Module):
             x = getattr(self, "bn{}".format(i + 1))(F.relu(x))
             x = getattr(self, "conv{}".format(i + 1))(x, mesh)
         x += x1
-        x = F.relu(x)
+        x = F.relu(x)  # should we remove this?
         return x
 
 
