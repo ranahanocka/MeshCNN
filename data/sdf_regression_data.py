@@ -33,12 +33,20 @@ class RegressionDataset(BaseDataset):
         self.nclasses = 1
         self.size = len(self.paths)
         self.sdf_meshes = [MeshSDF(path) for path, _ in self.paths]
-
         # modify for network later.
         opt.nclasses = self.nclasses
         self.positional_encoder = point_encoder_fabric(opt)
 
         opt.input_nc = self.ninput_channels = 5 + 3 * opt.encoding_factor
+        self.meshes = [
+            Mesh(
+                file=path,
+                opt=opt,
+                hold_history=False,
+                export_folder=self.opt.export_folder,
+            )
+            for path, _ in self.paths
+        ]
         self.mean_defined = False
         self.get_mean_std()
 
@@ -46,12 +54,7 @@ class RegressionDataset(BaseDataset):
         index = index % self.size
         path = self.paths[index][0]
         label = self.paths[index][1]
-        mesh = Mesh(
-            file=path,
-            opt=self.opt,
-            hold_history=False,
-            export_folder=self.opt.export_folder,
-        )
+        mesh = self.meshes[index]
         # get edge features
         normed_edge_features = self.get_normed_edge_features(mesh)
         if not self.mean_defined:
@@ -87,12 +90,15 @@ class RegressionDataset(BaseDataset):
         }
         return meta
 
-    def get_normed_edge_features(self, mesh):
+    def get_normed_edge_features(self, mesh: Mesh):
+        if mesh.normed is not None:
+            return mesh.normed
         edge_features = mesh.extract_features()
         edge_features = pad(edge_features, self.opt.ninput_edges)
         if not self.mean_defined:
             return edge_features
         normed_edge_features = (edge_features - self.mean) / self.std
+        mesh.normed = normed_edge_features
         return normed_edge_features
 
     def __len__(self):

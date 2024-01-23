@@ -20,6 +20,7 @@ class Mesh:
         if hold_history:
             self.init_history()
         self.export()
+        self.normed = None
 
     def extract_features(self):
         return self.features
