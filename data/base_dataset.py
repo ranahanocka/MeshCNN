@@ -1,5 +1,6 @@
 import os
 import pickle
+import warnings
 
 import numpy as np
 import torch.utils.data as data
@@ -32,7 +33,8 @@ class BaseDataset(data.Dataset):
         # TODO: Potentially it could be an issue that while we normalize our bacon_meshes one by one, we compute the
         #  mean and std over all the meshcnn meshes. This will potentially lead to a different normalization and issues
         #  when generalizing over multiple objects in one dataset.
-        if not os.path.isfile(mean_std_cache):
+        if not os.path.isfile(mean_std_cache) or True:
+            # TODO remove the or True for caching efficiency
             print("computing mean std from train data...")
             # doesn't run augmentation during m/std computation
             num_aug = self.opt.num_aug
@@ -58,10 +60,11 @@ class BaseDataset(data.Dataset):
                 pickle.dump(transform_dict, f)
             print("saved: ", mean_std_cache)
             self.opt.num_aug = num_aug
+        else:
+            warnings.warn("Using cached mean / std from {}".format(mean_std_cache))
         # open mean / std from file
         with open(mean_std_cache, "rb") as f:
             transform_dict = pickle.load(f)
-            print("loaded mean / std from cache")
             self.mean = transform_dict["mean"]
             self.std = transform_dict["std"]
             self.ninput_channels = transform_dict["ninput_channels"]

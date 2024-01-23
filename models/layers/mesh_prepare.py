@@ -1,13 +1,15 @@
 import ntpath
 import os
+import warnings
 
 import numpy as np
 
 
 def fill_mesh(mesh2fill, file: str, opt):
     load_path = get_mesh_path(file, opt.num_aug)
-    if os.path.exists(load_path):
+    if os.path.exists(load_path) and False:
         mesh_data = np.load(load_path, encoding="latin1", allow_pickle=True)
+        warnings.warn(f"{file} object was not loaded from file but from cache!")
     else:
         mesh_data = from_scratch(file, opt)
         np.savez_compressed(
@@ -25,8 +27,6 @@ def fill_mesh(mesh2fill, file: str, opt):
             features=mesh_data.features,
         )
     mesh2fill.vs = mesh_data["vs"]
-    if opt.normalize_mesh:
-        normalize(mesh2fill, opt)
     mesh2fill.edges = mesh_data["edges"]
     mesh2fill.gemm_edges = mesh_data["gemm_edges"]
     mesh2fill.edges_count = int(mesh_data["edges_count"])
@@ -66,7 +66,8 @@ def from_scratch(file, opt):
     mesh_data.filename = "unknown"
     mesh_data.edge_lengths = None
     mesh_data.edge_areas = []
-    mesh_data.vs, faces = fill_from_file(mesh_data, file)
+    vs_temp, faces = fill_from_file(mesh_data, file)
+    mesh_data.vs = normalize_mesh(vs_temp, opt)
     mesh_data.v_mask = np.ones(len(mesh_data.vs), dtype=bool)
     faces, face_areas = remove_non_manifolds(mesh_data, faces)
     if opt.num_aug > 1:
@@ -74,6 +75,7 @@ def from_scratch(file, opt):
     build_gemm(mesh_data, faces, face_areas)
     if opt.num_aug > 1:
         post_augmentation(mesh_data, opt)
+        warnings.warn("Augmentations should not be called in regression training")
     mesh_data.features = extract_features(mesh_data)
     return mesh_data
 
@@ -214,15 +216,16 @@ def post_augmentation(mesh, opt):
         slide_verts(mesh, opt.slide_verts)
 
 
-def normalize(mesh, opt):
+def normalize_mesh(vs, opt):
     if hasattr(opt, "normalize_mesh") and opt.normalize_mesh:
-        coords = mesh.vs
-        coords -= np.mean(coords, axis=0, keepdims=True)
-        coord_max = np.amax(coords)
-        coord_min = np.amin(coords)
-        coords = (coords - coord_min) / (coord_max - coord_min) * 0.9
-        coords -= 0.45
-        mesh.vs = coords
+        vs -= np.mean(vs, axis=0, keepdims=True)
+        coord_max = np.amax(vs)
+        coord_min = np.amin(vs)
+        vs = (vs - coord_min) / (coord_max - coord_min) * 0.9
+        vs -= 0.45
+    else:
+        warnings.warn("Mesh normalization is not enabled")
+    return vs
 
 
 def slide_verts(mesh, prct):

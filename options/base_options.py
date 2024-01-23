@@ -148,6 +148,12 @@ class BaseOptions:
             default=False,
             help="Whether to normalize the mesh like bacon",
         )
+        self.parser.add_argument(
+            "--normalize_features",
+            type=bool,
+            default=False,
+            help="Whether to normalize the edge features in meshcnn meshes using std and mean",
+        )
 
         self.parser.add_argument(
             "--loss", type=str, default="mse", help="loss function to use",

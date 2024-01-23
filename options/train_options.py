@@ -77,7 +77,10 @@ class TrainOptions(BaseOptions):
         )
         # data augmentation stuff
         self.parser.add_argument(
-            "--num_aug", type=int, default=20, help="# of augmentation files"
+            "--num_aug",
+            type=int,
+            default=1,
+            help="# of augmentation files in regression should be set to 1 (nothing)",
         )
         self.parser.add_argument(
             "--scale_verts",

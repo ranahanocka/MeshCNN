@@ -53,7 +53,7 @@ def rebuild_shape(grid_size=100, opt=None, part_to_sample: float = 0.75):
     pos_encoder = dataset.positional_encoder
     obj_path = xyz_path.replace(".xyz", ".obj")
     mesh = Mesh(file=obj_path, opt=opt, hold_history=False, export_folder=None,)
-    normed_edge_features = dataset.get_normed_edge_features(mesh)
+    edge_features = dataset.get_edge_features(mesh, normalize=opt.normalize_features)
     model = create_model(opt)
 
     batch_size = 256

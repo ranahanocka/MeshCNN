@@ -1,4 +1,5 @@
 import os
+import warnings
 
 import numpy as np
 import torch
@@ -48,7 +49,11 @@ class RegressionDataset(BaseDataset):
             for path, _ in self.paths
         ]
         self.mean_defined = False
-        self.get_mean_std()
+        if self.opt.normalize_features:
+            self.get_mean_std()
+            warnings.warn("Normalizing features is questionable for regression")
+        else:
+            self.mean_defined = True
 
     def __getitem__(self, index):
         index = index % self.size
@@ -56,9 +61,9 @@ class RegressionDataset(BaseDataset):
         label = self.paths[index][1]
         mesh = self.meshes[index]
         # get edge features
-        normed_edge_features = self.get_normed_edge_features(mesh)
+        edge_features = self.get_edge_features(mesh, self.opt.normalize_features)
         if not self.mean_defined:
-            meta = {"mesh": mesh, "label": label, "edge_features": normed_edge_features}
+            meta = {"mesh": mesh, "label": label, "edge_features": edge_features}
             return meta
 
         # get sdf mesh and sample a point for regression target and positional encoding
@@ -75,9 +80,7 @@ class RegressionDataset(BaseDataset):
         )
         # positional_encoded_point has shape (3) should be (3, 750) to concat with edge features
         positional_encoded_point_repeated = np.repeat(
-            np.expand_dims(positional_encoded_point, 1),
-            normed_edge_features.shape[1],
-            axis=1,
+            np.expand_dims(positional_encoded_point, 1), edge_features.shape[1], axis=1,
         )
 
         meta = {
@@ -85,17 +88,17 @@ class RegressionDataset(BaseDataset):
             "label": label,
             "regression_target": sdf,
             "edge_features": np.concatenate(
-                (normed_edge_features, positional_encoded_point_repeated), axis=0,
+                (edge_features, positional_encoded_point_repeated), axis=0,
             ),
         }
         return meta
 
-    def get_normed_edge_features(self, mesh: Mesh):
-        if mesh.normed is not None:
+    def get_edge_features(self, mesh: Mesh, normalize: bool = True):
+        if mesh.normed is not None and normalize:
             return mesh.normed
         edge_features = mesh.extract_features()
         edge_features = pad(edge_features, self.opt.ninput_edges)
-        if not self.mean_defined:
+        if not normalize or not self.mean_defined:
             return edge_features
         normed_edge_features = (edge_features - self.mean) / self.std
         mesh.normed = normed_edge_features
