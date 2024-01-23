@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import os
+import warnings
 
 import torch
 
@@ -89,7 +90,7 @@ class BaseOptions:
         )
         # general params
         self.parser.add_argument(
-            "--num_threads", default=3, type=int, help="# threads for loading data"
+            "--num_threads", default=1, type=int, help="# threads for loading data"
         )
         self.parser.add_argument(
             "--gpu_ids",
@@ -144,13 +145,13 @@ class BaseOptions:
         )
         self.parser.add_argument(
             "--normalize_mesh",
-            type=bool,
+            action="store_true",
             default=False,
             help="Whether to normalize the mesh like bacon",
         )
         self.parser.add_argument(
             "--normalize_features",
-            type=bool,
+            action="store_true",
             default=False,
             help="Whether to normalize the edge features in meshcnn meshes using std and mean",
         )
@@ -172,7 +173,9 @@ class BaseOptions:
             self.initialize()
         self.opt, unknown = self.parser.parse_known_args()
         self.opt.is_train = self.is_train  # train or test
-
+        if unknown:
+            warnings.warn("unknown arguments:")
+            print(unknown)
         str_ids = self.opt.gpu_ids.split(",")
         self.opt.gpu_ids = []
         for str_id in str_ids:
