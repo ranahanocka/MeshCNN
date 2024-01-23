@@ -24,14 +24,21 @@ def run_test(epoch=-1):
     # test
     writer.reset_counter()
     complete_sign_correct = 0
+    summed_conf_matrix = np.zeros((2, 2))
     for i, data in enumerate(dataset):
         model.set_input(data)
         metrics, nexamples = model.test()
-        mae, sign_correct = metrics
+        mae, sign_correct = metrics["mae_times_n"], metrics["sign_correct"]
         writer.update_counter(mae, nexamples)
         complete_sign_correct += sign_correct
+        summed_conf_matrix += np.array(metrics["conf_matrix"])
     sign_accuracy = complete_sign_correct / writer.nexamples
-    writer.print_acc(epoch, writer.acc, sign_accuracy=sign_accuracy)
+    writer.print_acc(
+        epoch,
+        writer.acc,
+        sign_accuracy=sign_accuracy,
+        summed_conf_matrix=summed_conf_matrix,
+    )
     return writer.acc, sign_accuracy
 
 

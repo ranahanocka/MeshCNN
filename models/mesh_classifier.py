@@ -3,7 +3,7 @@ from os.path import join
 
 import numpy as np
 import torch
-
+from torchmetrics.functional.classification import binary_confusion_matrix
 from util.util import seg_accuracy, print_network
 from . import networks
 
@@ -142,16 +142,31 @@ class ClassifierModel:
                 pred_class = out.data.max(1)[1]
                 label_class = self.labels
                 self.export_segmentation(pred_class.cpu())
-                correct = self.get_accuracy(pred_class, label_class)
+                metrics = self.get_accuracy(pred_class, label_class)
             elif self.opt.dataset_mode == "regression":
                 out = self.forward()
                 # compute number of correct
-                pred = out.data
-                label_class = self.labels
-                mae_times_n = self.get_accuracy(pred.cpu(), label_class.cpu())
-                sign_correct = self.get_accuracy(pred.cpu(), label_class.cpu(), "sign")
-                correct = mae_times_n, sign_correct
-        return correct, len(label_class)
+                pred = out.data.cpu()
+                label_class = self.labels.cpu()
+                mae_times_n = self.get_accuracy(pred, label_class)
+                sign_correct = self.get_accuracy(pred, label_class, "sign")
+                pred_plus_minus_one = torch.where(
+                    pred > 0, torch.ones_like(pred), torch.zeros_like(pred)
+                )
+                label_class_plus_minus_one = torch.where(
+                    label_class > 0,
+                    torch.ones_like(label_class),
+                    torch.zeros_like(label_class),
+                )
+                conf_matrix = binary_confusion_matrix(
+                    pred_plus_minus_one, label_class_plus_minus_one
+                )
+                metrics = dict(
+                    mae_times_n=mae_times_n,
+                    sign_correct=sign_correct,
+                    conf_matrix=conf_matrix,
+                )
+        return metrics, len(label_class)
 
     def get_accuracy(self, pred, labels, mode=None):
         """computes accuracy for classification / segmentation"""
