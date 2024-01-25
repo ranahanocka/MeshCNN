@@ -166,6 +166,12 @@ class BaseOptions:
             help="alpha param for loss function",
         )
 
+        self.parser.add_argument(
+            "--relu_deactivated",
+            action="store_true",
+            default=False,
+            help="Whether to deactivate relu in the convolutionals within the network. Default is False, deactivation is recommended for regression.",
+        )
         self.initialized = True
 
     def parse(self):

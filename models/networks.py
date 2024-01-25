@@ -133,6 +133,7 @@ def define_classifier(
             opt.pool_res,
             opt.fc_n,
             opt.resblocks,
+            opt.relu_deactivated,
         )
     elif arch == "meshunet":
         down_convs = [input_nc] + ncf
@@ -224,14 +225,20 @@ class MeshConvNet(nn.Module):
         pool_res,
         fc_n,
         nresblocks=3,
+        relu_deactivated=False,
     ):
         super(MeshConvNet, self).__init__()
         self.k = [nf0] + conv_res
         self.res = [input_res] + pool_res
         norm_args = get_norm_args(norm_layer, self.k[1:])
-
         for i, ki in enumerate(self.k[:-1]):
-            setattr(self, "conv{}".format(i), MResConv(ki, self.k[i + 1], nresblocks))
+            setattr(
+                self,
+                "conv{}".format(i),
+                MResConv(
+                    ki, self.k[i + 1], nresblocks, relu_deactivated=relu_deactivated
+                ),
+            )
             setattr(self, "norm{}".format(i), norm_layer(**norm_args[i]))
             setattr(self, "pool{}".format(i), MeshPool(self.res[i + 1]))
 
@@ -255,12 +262,13 @@ class MeshConvNet(nn.Module):
 
 
 class MResConv(nn.Module):
-    def __init__(self, in_channels, out_channels, skips=1):
+    def __init__(self, in_channels, out_channels, skips=1, relu_deactivated=False):
         super(MResConv, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.skips = skips
         self.conv0 = MeshConv(self.in_channels, self.out_channels, bias=False)
+        self.potential_relu = F.relu if not relu_deactivated else lambda x: x
         for i in range(self.skips):
             setattr(self, "bn{}".format(i + 1), nn.BatchNorm2d(self.out_channels))
             setattr(
@@ -276,7 +284,9 @@ class MResConv(nn.Module):
             x = getattr(self, "bn{}".format(i + 1))(F.relu(x))
             x = getattr(self, "conv{}".format(i + 1))(x, mesh)
         x += x1
-        x = F.relu(x)  # should we remove this? That is the relu we are talking about
+        x = self.potential_relu(
+            x
+        )  # should we remove this? That is the relu we are talking about
         return x
 
 
