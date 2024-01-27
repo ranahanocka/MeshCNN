@@ -59,7 +59,7 @@ class ClassifierModel:
             self.scheduler = networks.get_scheduler(self.optimizer, opt)
             print_network(self.net)
 
-        if opt.pretrained_path:
+        if self.is_train and opt.pretrained_path:
             self.load_network(opt.pretrained_path)
         elif not self.is_train or opt.continue_train:
             self.load_network(opt.which_epoch)
@@ -105,7 +105,7 @@ class ClassifierModel:
     def load_network(self, which_epoch):
         """load model from disk"""
         save_filename = "%s_net.pth" % which_epoch
-        if self.opt.pretrained_path:
+        if self.is_train and self.opt.pretrained_path:
             load_path = self.opt.pretrained_path
             self.opt.pretrained_path = None
         else:
@@ -125,6 +125,7 @@ class ClassifierModel:
         """save model to disk"""
         save_filename = "%s_net.pth" % (which_epoch)
         save_path = join(self.save_dir, save_filename)
+        print("saving the model to %s" % save_path)
         if len(self.gpu_ids) > 0 and torch.cuda.is_available():
             torch.save(self.net.module.cpu().state_dict(), save_path)
             self.net.cuda(self.gpu_ids[0])

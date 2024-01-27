@@ -172,6 +172,12 @@ class BaseOptions:
             default=False,
             help="Whether to deactivate relu in the convolutionals within the network. Default is False, deactivation is recommended for regression.",
         )
+        self.parser.add_argument(
+            "--pretrained_path",
+            type=str,
+            default="",
+            help="pre-trained model path can be found at ./checkpoints/shrec16/pre_trained_removed_layers.pth",
+        )
         self.initialized = True
 
     def parse(self):
