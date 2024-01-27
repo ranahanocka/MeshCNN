@@ -106,4 +106,10 @@ class TrainOptions(BaseOptions):
         self.parser.add_argument(
             "--verbose_plot", action="store_true", help="plots network weights, etc."
         )
+        self.parser.add_argument(
+            "--pretrained_path",
+            type=str,
+            default="None",
+            help="pre-trained model path can be found at ./checkpoints/shrec16/pre_trained_removed_layers.pth",
+        )
         self.is_train = True

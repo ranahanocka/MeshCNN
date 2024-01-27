@@ -59,7 +59,9 @@ class ClassifierModel:
             self.scheduler = networks.get_scheduler(self.optimizer, opt)
             print_network(self.net)
 
-        if not self.is_train or opt.continue_train:
+        if opt.pretrained_path:
+            self.load_network(opt.pretrained_path)
+        elif not self.is_train or opt.continue_train:
             self.load_network(opt.which_epoch)
 
     def set_input(self, data, inference=False):
@@ -103,7 +105,11 @@ class ClassifierModel:
     def load_network(self, which_epoch):
         """load model from disk"""
         save_filename = "%s_net.pth" % which_epoch
-        load_path = join(self.save_dir, save_filename)
+        if self.opt.pretrained_path:
+            load_path = self.opt.pretrained_path
+            self.opt.pretrained_path = None
+        else:
+            load_path = join(self.save_dir, save_filename)
         net = self.net
         if isinstance(net, torch.nn.DataParallel):
             net = net.module
@@ -113,7 +119,7 @@ class ClassifierModel:
         state_dict = torch.load(load_path, map_location=str(self.device))
         if hasattr(state_dict, "_metadata"):
             del state_dict._metadata
-        net.load_state_dict(state_dict)
+        net.load_state_dict(state_dict, strict=False)
 
     def save_network(self, which_epoch):
         """save model to disk"""
