@@ -1,3 +1,39 @@
+# Robust Neural Fields - MeshCNN as NN Distance Extractor
+
+We are using the following repository to implement ground truth generation for SDF Overfitting.  
+We therefore adopt MeshCNN for regression and feed it with positional data to generate ground truth SDFs.
+The idea is to use Neural Networks as alternative to the classical (normal aware) distance field extraction methods, that 
+have troubles when e.g. normals are not well defined:
+![img.png](docs/imgs/results_overview.png)
+If interested in the topic, you can find our final report here: [Final_Report_Robust_Neural_Fields.pdf](Final_Report_Robust_Neural_Fields.pdf)  
+The BACON fork we adopted as a framework to implement different distance extractors can be found here: [BACON](https://github.com/julianstrietzel/bacon)  
+![architecture.png](docs%2Fimgs%2Farchitecture.png)
+The project is part of the lecture "[Advanced Deep Learning for Computer Vision](https://niessner.github.io/ADL4CV/)" at the Technical University of Munich.
+
+When using this Repository please refer to the original documentation for set up. 
+But use the env_export.yml to set up the environment, which is a modified version to work with our project and also the 
+related BACON Fork for the SDF Overfitting.
+
+
+To setup a conda environment use these commands
+
+```
+conda env create -f env_export.yml
+conda activate bacon
+```
+
+Now you can train MeshCNN to learn distance extraction from meshes with the following commands.
+
+```
+train.py --dataroot ./datasets/armadillo_shrec --name debug_armadillo --norm group --ncf 64 128 256 256 --pool_res 600 450 300 180 --dataset_mode regression --lr 0.000005 --point_encode nerf_encoding --batch_size 64 --gpu_ids 0 --num_freqs 6 --normalize_mesh
+```
+
+You can render the trained models within the bacon framework for debugging.
+Or you can use the trained models to generate SDFs for SDF Overfitting also within the BACON framework.
+
+_Below the original readme of MeshCNN:_
+
+
 <img src='docs/imgs/alien.gif' align="right" width=325>
 <br><br><br>
 
